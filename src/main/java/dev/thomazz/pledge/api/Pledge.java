@@ -91,6 +91,11 @@ public interface Pledge {
     Optional<PacketFrame> getFrame(UUID playerId);
 
     /**
+     * Forcefully calls the tick end method, flushing packets.
+     */
+    void forceFlushPackets();
+
+    /**
      * @return - If the current server version supports packet bundles.
      */
     boolean supportsBundles();

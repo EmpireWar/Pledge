@@ -119,25 +119,27 @@ public class PlayerHandler {
     }
 
     public void tickEnd() {
-        this.channel.eventLoop().execute(() -> {
-            // Make sure to offer the next frame to the handler and the awaiting frame queue
-            PacketFrame frame = this.currentFrame.getAndSet(null);
-            if (frame != null) {
-                this.frameQueue.offer(frame);
-            }
+        this.channel.eventLoop().execute(this::processTickEnd);
+    }
 
-            // Drain net handler since flushing is overridden
-            ChannelHandlerContext context = this.channel.pipeline().context(this.tailHandler);
+    public void processTickEnd() {
+        // Make sure to offer the next frame to the handler and the awaiting frame queue
+        PacketFrame frame = this.currentFrame.getAndSet(null);
+        if (frame != null) {
+            this.frameQueue.offer(frame);
+        }
 
-            // Context could be null if the channel already had the net handler removed
-            if (context != null) {
-                try {
-                    this.tailHandler.drain(context, frame);
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
-                }
+        // Drain net handler since flushing is overridden
+        ChannelHandlerContext context = this.channel.pipeline().context(this.tailHandler);
+
+        // Context could be null if the channel already had the net handler removed
+        if (context != null) {
+            try {
+                this.tailHandler.drain(context, frame);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
             }
-        });
+        }
     }
 
     // Processes incoming ids from netty thread
