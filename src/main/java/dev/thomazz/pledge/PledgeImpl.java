@@ -113,6 +113,11 @@ public class PledgeImpl implements Pledge, Listener {
     }
 
     @Override
+    public void forceFlushPackets() {
+        this.playerHandlers.values().forEach(PlayerHandler::processTickEnd);
+    }
+
+    @Override
     public PledgeImpl start(JavaPlugin plugin) {
         this.validateActive();
 
