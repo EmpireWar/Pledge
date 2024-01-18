@@ -113,8 +113,8 @@ public class PledgeImpl implements Pledge, Listener {
     }
 
     @Override
-    public void forceFlushPackets() {
-        this.playerHandlers.values().forEach(PlayerHandler::processTickEnd);
+    public void forceFlushPackets(Player player) {
+        getHandler(player).ifPresent(PlayerHandler::processTickEnd);
     }
 
     @Override

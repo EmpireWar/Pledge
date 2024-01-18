@@ -93,7 +93,7 @@ public interface Pledge {
     /**
      * Forcefully calls the tick end method, flushing packets.
      */
-    void forceFlushPackets();
+    void forceFlushPackets(Player player);
 
     /**
      * @return - If the current server version supports packet bundles.
