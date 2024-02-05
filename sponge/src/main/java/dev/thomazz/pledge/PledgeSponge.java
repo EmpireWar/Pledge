@@ -41,7 +41,7 @@ public class PledgeSponge implements Pledge<PluginContainer, ServerPlayer> {
      * <p>
      * @return - API instance
      */
-    static Pledge<PluginContainer, ServerPlayer> build() {
+    public static Pledge<PluginContainer, ServerPlayer> build() {
         return new PledgeSponge();
     }
 

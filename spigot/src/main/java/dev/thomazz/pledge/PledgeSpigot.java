@@ -37,7 +37,7 @@ public class PledgeSpigot implements Pledge<JavaPlugin, Player>, Listener {
      * <p>
      * @return - API instance
      */
-    static Pledge<JavaPlugin, Player> build() {
+    public static Pledge<JavaPlugin, Player> build() {
         return new PledgeSpigot();
     }
 
