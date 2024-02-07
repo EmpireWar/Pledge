@@ -159,7 +159,7 @@ public class PledgeSponge implements Pledge<PluginContainer, ServerPlayer> {
         }
 
         this.plugin = plugin;
-        this.tickTask = Sponge.server().scheduler().submit(Task.builder().interval(Ticks.single()).execute(this::tickStart).build());
+        this.tickTask = Sponge.server().scheduler().submit(Task.builder().plugin(plugin).interval(Ticks.single()).execute(this::tickStart).build());
         TickEndTask.initialise(this);
         this.tickEndTask = new TickEndTask(this::tickEnd).start();
 
