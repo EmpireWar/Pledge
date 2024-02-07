@@ -39,8 +39,6 @@ public final class ReflectiveChannelAccess implements ChannelAccess {
     @Override
     public Channel getChannel(Object player, UUID playerId) {
         try {
-            Object handle = player.getClass().getDeclaredMethod("getHandle").invoke(player);
-
             List<Object> networkManagers = this.getNetworkManagers();
 
             Field channelField = ReflectionUtil.getFieldByType(networkManagerClass, Channel.class);
@@ -71,8 +69,13 @@ public final class ReflectiveChannelAccess implements ChannelAccess {
                             continue;
                         }
 
+                        Object handle = null;
+                        try {
+                           handle = player.getClass().getDeclaredMethod("getHandle").invoke(player);
+                        } catch (NoSuchMethodException ignored) {}
+
                         Object entityPlayer = playerField.get(packetListener);
-                        if (handle.equals(entityPlayer)) {
+                        if (entityPlayer.equals(handle != null ? handle : player)) {
                             return (Channel) channelField.get(networkManager);
                         }
                     }
