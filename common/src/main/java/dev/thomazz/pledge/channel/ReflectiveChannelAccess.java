@@ -25,6 +25,7 @@ public final class ReflectiveChannelAccess implements ChannelAccess {
         this.pledge = pledge;
 
         this.networkManagerClass = pledge.reflectionProvider().getMinecraftClass(
+                "network.Connection",
                 "network.NetworkManager",
                 "NetworkManager"
         );
