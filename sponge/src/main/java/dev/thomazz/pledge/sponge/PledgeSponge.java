@@ -1,6 +1,5 @@
 package dev.thomazz.pledge.sponge;
 
-import com.google.inject.Inject;
 import dev.thomazz.pledge.api.PacketFrame;
 import dev.thomazz.pledge.api.Pledge;
 import dev.thomazz.pledge.channel.ChannelAccess;
@@ -59,10 +58,7 @@ public class PledgeSponge implements Pledge<PluginContainer, ServerPlayer> {
         return new PledgeSponge();
     }
 
-    @Inject
     private Logger logger;
-
-    @Inject
     private PluginContainer plugin;
 
     private ScheduledTask tickTask;
@@ -159,6 +155,7 @@ public class PledgeSponge implements Pledge<PluginContainer, ServerPlayer> {
         }
 
         this.plugin = plugin;
+        this.logger = plugin.logger();
         this.tickTask = Sponge.server().scheduler().submit(Task.builder().plugin(plugin).interval(Ticks.single()).execute(this::tickStart).build());
         TickEndTask.initialise(this);
         this.tickEndTask = new TickEndTask(this::tickEnd).start();
