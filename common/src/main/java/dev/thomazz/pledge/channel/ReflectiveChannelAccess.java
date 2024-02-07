@@ -49,7 +49,7 @@ public final class ReflectiveChannelAccess implements ChannelAccess {
             for (Object networkManager : networkManagers) {
                 final Object packetListener = packetListenerField.get(networkManager);
                 if (packetListener != null) {
-                    if (packetListener.getClass().getSimpleName().equals("LoginListener")) {
+                    if (packetListener.getClass().getSimpleName().equals("LoginListener") || packetListener.getClass().getSimpleName().equals("ServerConfigurationPacketListenerImpl") || packetListener.getClass().getSimpleName().equals("ServerLoginPacketListenerImpl")) {
                         // We can use the game profile to look up the player id in the listener
                         Field profileField = ReflectionUtil.getFieldByClassNames(packetListener.getClass(), "GameProfile");
                         Object gameProfile = profileField.get(packetListener);
@@ -63,7 +63,7 @@ public final class ReflectiveChannelAccess implements ChannelAccess {
                         // For player connection listeners we can get the player handle
                         Field playerField;
                         try {
-                            playerField = ReflectionUtil.getFieldByClassNames(packetListener.getClass(), "EntityPlayer");
+                            playerField = ReflectionUtil.getFieldByClassNames(packetListener.getClass(), "ServerPlayer", "EntityPlayer");
                         } catch (NoSuchFieldException ignored) {
                             // Might be ServerConfigurationPacketListenerImpl or something else that is unsupported
                             continue;
@@ -118,7 +118,8 @@ public final class ReflectiveChannelAccess implements ChannelAccess {
         try {
             Object serverConnection = pledge.reflectionProvider().getServerConnection();
             for (Field field : serverConnection.getClass().getDeclaredFields()) {
-                if (!List.class.isAssignableFrom(field.getType()) || !field.getGenericType().getTypeName().contains("NetworkManager")) {
+                final String typeName = field.getGenericType().getTypeName();
+                if (!List.class.isAssignableFrom(field.getType()) || (!typeName.contains("NetworkManager") && !typeName.contains("Connection"))) {
                     continue;
                 }
 

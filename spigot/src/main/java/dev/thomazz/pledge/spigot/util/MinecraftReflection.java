@@ -24,7 +24,7 @@ public class MinecraftReflection implements MinecraftReflectionProvider {
     @Override
     public Object getServerConnection() throws Exception {
         Object minecraftServer = getMinecraftServer();
-        Field connectionField = ReflectionUtil.getFieldByClassNames(minecraftServer.getClass().getSuperclass(), "ServerConnection");
+        Field connectionField = ReflectionUtil.getFieldByClassNames(minecraftServer.getClass().getSuperclass(), "ServerConnectionListener", "ServerConnection");
         return connectionField.get(minecraftServer);
     }
 
