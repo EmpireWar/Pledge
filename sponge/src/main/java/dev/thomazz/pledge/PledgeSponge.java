@@ -35,6 +35,20 @@ import java.util.UUID;
 @Getter
 public class PledgeSponge implements Pledge<PluginContainer, ServerPlayer> {
 
+    private final MinecraftReflectionProvider provider;
+    private final ChannelAccess channelAccess;
+    private final PacketBundleBuilder packetBundleBuilder;
+    private final PacketProvider packetProvider;
+    private final Map<UUID, PlayerHandlerImpl> playerHandlers;
+
+    public PledgeSponge() {
+        this.provider = new MinecraftReflection();
+        this.channelAccess = new ReflectiveChannelAccess(this);
+        this.packetBundleBuilder = new PacketBundleBuilder();
+        this.packetProvider = PacketProviderFactory.build(this);
+        this.playerHandlers = new HashMap<>();
+    }
+
     /**
      * Sets up Pledge to start tracking packets using {@link PacketFrame}s.
      * Only a single instance should be active at a time to prevent undesirable behaviour.
@@ -44,11 +58,6 @@ public class PledgeSponge implements Pledge<PluginContainer, ServerPlayer> {
     public static Pledge<PluginContainer, ServerPlayer> build() {
         return new PledgeSponge();
     }
-
-    private final ChannelAccess channelAccess = new ReflectiveChannelAccess(this);
-    private final PacketBundleBuilder packetBundleBuilder = new PacketBundleBuilder();
-    private final PacketProvider packetProvider = PacketProviderFactory.build(this);
-    private final Map<UUID, PlayerHandlerImpl> playerHandlers = new HashMap<>();
 
     @Inject
     private Logger logger;
@@ -135,8 +144,6 @@ public class PledgeSponge implements Pledge<PluginContainer, ServerPlayer> {
     public void forceFlushPackets(ServerPlayer player) {
         getHandler(player).ifPresent(PlayerHandlerImpl::processTickEnd);
     }
-
-    private final MinecraftReflectionProvider provider = new MinecraftReflection();
 
     @Override
     public MinecraftReflectionProvider reflectionProvider() {
