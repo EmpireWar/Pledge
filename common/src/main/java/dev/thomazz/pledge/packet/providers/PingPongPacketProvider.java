@@ -20,12 +20,21 @@ public class PingPongPacketProvider implements PacketProvider {
     public PingPongPacketProvider(Pledge<?, ?> pledge) throws Exception {
         this.pingClass = pledge.reflectionProvider().gamePacket("ClientboundPingPacket");
         this.pongClass = pledge.reflectionProvider().gamePacket("ServerboundPongPacket");
-        this.loginClass = pledge.reflectionProvider().gamePacket("PacketPlayOutLogin");
+        this.loginClass = getLoginClass(pledge);
         this.keepAliveClass = getKeepAliveClass(pledge);
         this.disconnectClass = getDisconnectClass(pledge);
 
         this.pongIdField = ReflectionUtil.getFieldByType(this.pongClass, int.class);
         this.pingConstructor = this.pingClass.getConstructor(int.class);
+    }
+
+    private Class<?> getLoginClass(Pledge<?, ?> pledge) throws Exception {
+        try {
+            return pledge.reflectionProvider().gamePacket("PacketPlayOutLogin");
+        } catch (Exception ignored) {
+            // 1.20.2+
+            return pledge.reflectionProvider().gamePacket("ClientboundLoginPacket");
+        }
     }
 
     private Class<?> getKeepAliveClass(Pledge<?, ?> pledge) throws Exception {
