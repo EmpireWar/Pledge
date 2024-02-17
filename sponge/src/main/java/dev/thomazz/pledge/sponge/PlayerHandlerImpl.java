@@ -119,10 +119,10 @@ public class PlayerHandlerImpl implements PlayerHandler {
     }
 
     public void tickEnd() {
-        this.channel.eventLoop().execute(this::processTickEnd);
+        this.channel.eventLoop().execute(() -> this.processTickEnd(true));
     }
 
-    public void processTickEnd() {
+    public void processTickEnd(boolean flush) {
         // Make sure to offer the next frame to the handler and the awaiting frame queue
         PacketFrame frame = this.currentFrame.getAndSet(null);
         if (frame != null) {
@@ -135,7 +135,7 @@ public class PlayerHandlerImpl implements PlayerHandler {
         // Context could be null if the channel already had the net handler removed
         if (context != null) {
             try {
-                this.tailHandler.drain(context, frame);
+                this.tailHandler.drain(context, frame, flush);
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }

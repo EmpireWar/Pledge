@@ -133,8 +133,8 @@ public class PledgeSpigot implements Pledge<JavaPlugin, Player>, Listener {
     }
 
     @Override
-    public void forceFlushPackets(Player player) {
-        getHandler(player).ifPresent(PlayerHandlerImpl::processTickEnd);
+    public void finishFrame(Player player, boolean flush) {
+        getHandler(player).ifPresent(handler -> handler.processTickEnd(flush));
     }
 
     @Override

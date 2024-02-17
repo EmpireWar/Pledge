@@ -137,8 +137,8 @@ public class PledgeSponge implements Pledge<PluginContainer, ServerPlayer> {
     }
 
     @Override
-    public void forceFlushPackets(ServerPlayer player) {
-        getHandler(player).ifPresent(PlayerHandlerImpl::processTickEnd);
+    public void finishFrame(ServerPlayer player, boolean flush) {
+        getHandler(player).ifPresent(handler -> handler.processTickEnd(flush));
     }
 
     @Override

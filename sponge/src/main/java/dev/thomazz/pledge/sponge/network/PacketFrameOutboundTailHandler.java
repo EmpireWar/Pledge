@@ -55,7 +55,7 @@ public class PacketFrameOutboundTailHandler extends ChannelOutboundHandlerAdapte
     }
 
     // Called to drain all queued packets lower into the pipeline and finally flush
-    public void drain(ChannelHandlerContext ctx, @Nullable PacketFrame frame) throws Exception {
+    public void drain(ChannelHandlerContext ctx, @Nullable PacketFrame frame, boolean flush) throws Exception {
         // Call flush event right before flushing to allow for some final changes to the queue
         User player = this.playerHandler.getPlayer();
         Sponge.eventManager().post(new PacketFlushEvent(player, this.messageQueue));
@@ -87,7 +87,9 @@ public class PacketFrameOutboundTailHandler extends ChannelOutboundHandlerAdapte
         }
 
         // Finally flush all packets at once
-        super.flush(ctx);
+        if (flush) {
+            super.flush(ctx);
+        }
     }
 
     @Override
