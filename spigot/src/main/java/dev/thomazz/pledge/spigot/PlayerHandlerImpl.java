@@ -62,7 +62,7 @@ public class PlayerHandlerImpl implements PlayerHandler {
 
         // Create new channel handlers
         PacketProvider provider = pledge.getPacketProvider();
-        PacketFrameInboundHandler inbound = new PacketFrameInboundHandler(this, provider);
+        PacketFrameInboundHandler inbound = new PacketFrameInboundHandler(pledge, this, provider);
 
         this.tailHandler = new PacketFrameOutboundTailHandler(pledge, this);
         PacketFrameOutboundHeadHandler headHandler = new PacketFrameOutboundHeadHandler(pledge, this, this.tailHandler);

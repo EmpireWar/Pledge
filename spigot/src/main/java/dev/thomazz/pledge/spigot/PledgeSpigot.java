@@ -65,6 +65,7 @@ public class PledgeSpigot implements Pledge<JavaPlugin, Player>, Listener {
     private int frameInterval = 0;
 
     // Default values, can modify through API
+    private boolean cancelPongs = false;
     private int rangeStart = -2000;
     private int rangeEnd = -3000;
 
@@ -235,6 +236,17 @@ public class PledgeSpigot implements Pledge<JavaPlugin, Player>, Listener {
     @Override
     public boolean supportsBundles() {
         return this.packetBundleBuilder.isSupported();
+    }
+
+    @Override
+    public Pledge<JavaPlugin, Player> setCancelPongs(boolean cancelPongs) {
+        this.cancelPongs = cancelPongs;
+        return this;
+    }
+
+    @Override
+    public boolean cancelPongs() {
+        return cancelPongs;
     }
 
     // Lowest priority to have data be available on join event

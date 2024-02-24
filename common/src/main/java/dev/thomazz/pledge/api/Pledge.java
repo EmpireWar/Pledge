@@ -89,4 +89,15 @@ public interface Pledge<P, SP> {
      * @return - If the current server version supports packet bundles.
      */
     boolean supportsBundles();
+
+    /**
+     * Sets whether to cancel pongs from being received by other listeners.
+     * @param cancelPongs true to cancel pongs
+     */
+    Pledge<P, SP> setCancelPongs(boolean cancelPongs);
+
+    /**
+     * @return whether pongs should be cancelled from being received by other listeners
+     */
+    boolean cancelPongs();
 }

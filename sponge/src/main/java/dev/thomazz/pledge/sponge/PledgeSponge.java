@@ -69,6 +69,7 @@ public class PledgeSponge implements Pledge<PluginContainer, ServerPlayer> {
     private int frameInterval = 0;
 
     // Default values, can modify through API
+    private boolean cancelPongs = false;
     private int rangeStart = -2000;
     private int rangeEnd = -3000;
 
@@ -240,6 +241,17 @@ public class PledgeSponge implements Pledge<PluginContainer, ServerPlayer> {
     @Override
     public boolean supportsBundles() {
         return this.packetBundleBuilder.isSupported();
+    }
+
+    @Override
+    public Pledge<PluginContainer, ServerPlayer> setCancelPongs(boolean cancelPongs) {
+        this.cancelPongs = cancelPongs;
+        return this;
+    }
+
+    @Override
+    public boolean cancelPongs() {
+        return cancelPongs;
     }
 
     // Lowest priority to have data be available on join event
