@@ -25,6 +25,7 @@ import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.util.Ticks;
 import org.spongepowered.api.util.Tristate;
 import org.spongepowered.plugin.PluginContainer;
+import org.spongepowered.plugin.builtin.jvm.Plugin;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -257,8 +258,8 @@ public class PledgeSponge implements Pledge<PluginContainer, ServerPlayer> {
     // Lowest priority to have data be available on join event
     @Listener(order = Order.LAST)
     @IsCancelled(Tristate.FALSE) // No reason to create a handler if login isn't allowed
-    public void onPlayerLogin(ServerSideConnectionEvent.Join event) {
-        User player = event.player().user();
+    public void onPlayerLogin(ServerSideConnectionEvent.Login event) {
+        User player = event.user();
         this.createHandler(player, this.channelAccess.getChannel(player, player.uniqueId()));
     }
 
