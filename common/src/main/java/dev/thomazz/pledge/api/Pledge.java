@@ -86,6 +86,11 @@ public interface Pledge<P, SP> {
     void finishFrame(SP player, boolean flush);
 
     /**
+     * Forcefully calls the tick end method, thus finishing a frame, optionally flushing packets.
+     */
+    void finishFrame(UUID uuid, boolean flush);
+
+    /**
      * @return - If the current server version supports packet bundles.
      */
     boolean supportsBundles();

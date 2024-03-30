@@ -135,7 +135,12 @@ public class PledgeSpigot implements Pledge<JavaPlugin, Player>, Listener {
 
     @Override
     public void finishFrame(Player player, boolean flush) {
-        getHandler(player).ifPresent(handler -> handler.processTickEnd(flush));
+        finishFrame(player.getUniqueId(), flush);
+    }
+
+    @Override
+    public void finishFrame(UUID uuid, boolean flush) {
+        getHandler(uuid).ifPresent(handler -> handler.processTickEnd(flush));
     }
 
     @Override

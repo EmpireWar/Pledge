@@ -140,7 +140,12 @@ public class PledgeSponge implements Pledge<PluginContainer, ServerPlayer> {
 
     @Override
     public void finishFrame(ServerPlayer player, boolean flush) {
-        getHandler(player).ifPresent(handler -> handler.processTickEnd(flush));
+        finishFrame(player.uniqueId(), flush);
+    }
+
+    @Override
+    public void finishFrame(UUID uuid, boolean flush) {
+        getHandler(uuid).ifPresent(handler -> handler.processTickEnd(flush));
     }
 
     @Override
