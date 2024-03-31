@@ -35,6 +35,7 @@ public final class ChannelAccessProvider {
 
         this.PLAYER_CONNECTION_CLASS = reflectionProvider.getMinecraftClass(
                 "server.network.PlayerConnection",
+                "server.network.ServerGamePacketListenerImpl",
                 "PlayerConnection"
         );
     }
@@ -42,24 +43,25 @@ public final class ChannelAccessProvider {
     public Channel getChannel(Object handle, UUID playerId) {
         try {
             Field playerConnectionField = ReflectionUtil.getFieldByType(handle.getClass(), PLAYER_CONNECTION_CLASS);
-            Field networkManagerField = ReflectionUtil.getFieldByType(PLAYER_CONNECTION_CLASS, NETWORK_MANAGER_CLASS);
             Field channelField = ReflectionUtil.getFieldByType(NETWORK_MANAGER_CLASS, Channel.class);
 
             // Try the easy way first
             Object playerConnection = playerConnectionField.get(handle);
             if (playerConnection != null) {
-                Object networkManager = networkManagerField.get(playerConnection);
-                return (Channel) channelField.get(networkManager);
+                try {
+                    Field networkManagerField = ReflectionUtil.getFieldByType(PLAYER_CONNECTION_CLASS, NETWORK_MANAGER_CLASS);
+                    Object networkManager = networkManagerField.get(playerConnection);
+                    return (Channel) channelField.get(networkManager);
+                } catch (NoSuchFieldException ignored) { }
             }
 
             // Try to match all network managers after from game profile
             List<Object> networkManagers = getNetworkManagers();
-            Field listenerField = ReflectionUtil.getFieldByType(NETWORK_MANAGER_CLASS, PACKET_LISTENER_CLASS);
 
             for (Object networkManager : networkManagers) {
-                Object packetListener = listenerField.get(networkManager);
+                Object packetListener = ReflectionUtil.getNonNullFieldByType(networkManager, PACKET_LISTENER_CLASS);
                 if (packetListener != null) {
-                    if (packetListener.getClass().getSimpleName().equals("LoginListener")) {
+                    if (packetListener.getClass().getSimpleName().equals("LoginListener") || packetListener.getClass().getSimpleName().equals("ServerLoginPacketListenerImpl")) {
                         Field profileField = ReflectionUtil.getFieldByClassNames(packetListener.getClass(), "GameProfile");
                         Object gameProfile = profileField.get(packetListener);
 
