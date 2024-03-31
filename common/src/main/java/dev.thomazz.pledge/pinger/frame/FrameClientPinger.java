@@ -21,6 +21,12 @@ public interface FrameClientPinger<SP> extends ClientPinger<SP> {
     Frame getOrCreate(UUID player);
 
     /**
+     * Finishes the current frame for the player.
+     * @param player - Player to end frame for
+     */
+    void finishFrame(UUID player);
+
+    /**
      * Attaches a listener to listen to any events for {@link Frame} objects.
      * <p>
      * @param listener - Listener to attach

@@ -35,13 +35,13 @@ public class ChannelMessageQueueHandler extends ChannelOutboundHandlerAdapter {
 
     @Override
     public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
-        this.drain(ctx);
+        this.drain(ctx, true);
         super.close(ctx, promise);
     }
 
-    public void drain(ChannelHandlerContext ctx) {
+    public void drain(ChannelHandlerContext ctx, boolean flush) {
         this.messageQueue.forEach(ctx::write);
         this.messageQueue.clear();
-        ctx.flush();
+        if (flush) ctx.flush();
     }
 }

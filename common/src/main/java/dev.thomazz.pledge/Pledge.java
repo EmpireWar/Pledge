@@ -57,7 +57,7 @@ public interface Pledge<SP> {
      * @param endId   - End ID for ping range
      * @return        - Frame client pinger instance
      */
-    FrameClientPinger createFramePinger(int startId, int endId);
+    FrameClientPinger<SP> createFramePinger(int startId, int endId);
 
     PingPacketProvider getPacketProvider();
 

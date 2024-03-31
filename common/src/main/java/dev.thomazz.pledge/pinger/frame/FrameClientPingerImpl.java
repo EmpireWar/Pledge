@@ -56,7 +56,7 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
 
     @Override
     public void tickEnd() {
-        this.frameDataMap.forEach(this::trySendPings);
+        this.frameDataMap.forEach((id, data) -> this.trySendPings(id, data, true));
     }
 
     @Override
@@ -101,7 +101,12 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
         return frameData.getFrame();
     }
 
-    public Optional<FrameData> getFrameData(SP player) {
+    @Override
+    public void finishFrame(UUID player) {
+        getFrameData(player).ifPresent(data -> this.trySendPings(player, data, false));
+    }
+
+    public Optional<FrameData> getFrameData(UUID player) {
         return Optional.ofNullable(this.frameDataMap.get(player));
     }
 
@@ -119,7 +124,7 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
         );
     }
 
-    private void trySendPings(UUID player, FrameData frameData) {
+    private void trySendPings(UUID player, FrameData frameData, boolean flush) {
         Optional<Frame> optionalFrame = frameData.continueFrame();
 
         this.api.getChannel(player).filter(Channel::isOpen).ifPresent(channel ->
@@ -138,7 +143,7 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
                         this.ping(player, new Ping(PingOrder.TICK_END, frame.getEndId()));
                     }
 
-                    handler.drain(channel.pipeline().context(handler));
+                    handler.drain(channel.pipeline().context(handler), flush);
                 } catch (Exception ex) {
                     this.api.logger().severe("Unable to drain message queue from player: " + player);
                     ex.printStackTrace();

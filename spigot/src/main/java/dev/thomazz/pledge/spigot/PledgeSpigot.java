@@ -54,7 +54,7 @@ public final class PledgeSpigot implements Pledge<Player>, Listener {
      * @param plugin - Plugin to register listeners under
      * @return       - API instance
      */
-    static Pledge<Player> getOrCreate(@NotNull Plugin plugin) {
+    public static Pledge<Player> getOrCreate(@NotNull Plugin plugin) {
         if (PledgeSpigot.instance == null) {
             PledgeSpigot.instance = new PledgeSpigot(plugin).start();
         }

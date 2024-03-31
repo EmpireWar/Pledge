@@ -55,7 +55,7 @@ public final class PledgeSponge implements Pledge<User> {
      * @param plugin - Plugin to register listeners under
      * @return       - API instance
      */
-    static Pledge<User> getOrCreate(@NotNull PluginContainer plugin) {
+    public static Pledge<User> getOrCreate(@NotNull PluginContainer plugin) {
         if (PledgeSponge.instance == null) {
             PledgeSponge.instance = new PledgeSponge(plugin).start();
         }
