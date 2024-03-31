@@ -24,6 +24,7 @@ public final class ChannelAccessProvider {
         final MinecraftReflectionProvider reflectionProvider = pledge.getReflectionProvider();
         this.NETWORK_MANAGER_CLASS = reflectionProvider.getMinecraftClass(
                 "network.NetworkManager",
+                "network.Connection",
                 "NetworkManager"
         );
         
@@ -72,7 +73,7 @@ public final class ChannelAccessProvider {
                         // For player connection listeners we can get the player handle
                         Field playerField;
                         try {
-                            playerField = ReflectionUtil.getFieldByClassNames(packetListener.getClass(), "EntityPlayer");
+                            playerField = ReflectionUtil.getFieldByClassNames(packetListener.getClass(), "ServerPlayer", "EntityPlayer");
                         } catch (NoSuchFieldException ignored) {
                             // Might be ServerConfigurationPacketListenerImpl or something else that is unsupported
                             continue;
@@ -97,7 +98,8 @@ public final class ChannelAccessProvider {
         try {
             Object serverConnection = pledge.getReflectionProvider().getServerConnection();
             for (Field field : serverConnection.getClass().getDeclaredFields()) {
-                if (!List.class.isAssignableFrom(field.getType()) || !field.getGenericType().getTypeName().contains("NetworkManager")) {
+                final String typeName = field.getGenericType().getTypeName();
+                if (!List.class.isAssignableFrom(field.getType()) || (!typeName.contains("NetworkManager") && !typeName.contains("Connection"))) {
                     continue;
                 }
 

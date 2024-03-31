@@ -54,7 +54,7 @@ public interface MinecraftReflectionProvider {
 
     default Object getServerConnection() throws Exception {
         Object minecraftServer = getNMSServer();
-        Field connectionField = ReflectionUtil.getFieldByClassNames(minecraftServer.getClass().getSuperclass(), "ServerConnection");
+        Field connectionField = ReflectionUtil.getFieldByClassNames(minecraftServer.getClass().getSuperclass(), "ServerConnectionListener", "ServerConnection");
         return connectionField.get(minecraftServer);
     }
 
