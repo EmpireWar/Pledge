@@ -12,6 +12,7 @@ plugins {
 dependencies {
     api(project(":common"))
     compileOnly(libs.org.spigotmc.spigot.api)
+    testImplementation(libs.org.spigotmc.spigot.api)
 }
 
 tasks {

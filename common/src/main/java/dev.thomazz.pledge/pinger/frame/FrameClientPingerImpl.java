@@ -161,16 +161,9 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
     private void injectPlayer(UUID player) {
         ChannelMessageQueueHandler queueHandler = new ChannelMessageQueueHandler();
         ChannelMessageQueuePrimer queuePrimer = new ChannelMessageQueuePrimer(api, queueHandler);
-        this.api.getChannel(player).ifPresent(
-            channel -> channel.pipeline()
-                .addFirst(
-                    "pledge_queue_handler",
-                    queueHandler
-                )
-                .addLast(
-                    "pledge_queue_primer",
-                    queuePrimer
-                )
+        this.api.getChannel(player).map(Channel::pipeline).ifPresent(pipe ->
+                pipe.addFirst("pledge_queue_handler", queueHandler)
+                        .addLast("pledge_queue_primer", queuePrimer)
         );
     }
 

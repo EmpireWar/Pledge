@@ -17,6 +17,7 @@ import dev.thomazz.pledge.sponge.event.TickEndEvent;
 import dev.thomazz.pledge.sponge.event.TickStartEvent;
 import dev.thomazz.pledge.sponge.reflection.ReflectionProvider;
 import dev.thomazz.pledge.util.ChannelAccessProvider;
+import dev.thomazz.pledge.util.ChannelUtils;
 import dev.thomazz.pledge.util.MinecraftReflectionProvider;
 import dev.thomazz.pledge.util.TickEndTask;
 import io.netty.channel.Channel;
@@ -168,17 +169,12 @@ public final class PledgeSponge implements Pledge<User> {
             int pingId = Math.max(Math.min(id, max), min);
 
             // Run on channel event loop
-            this.getChannel(player).ifPresent(channel -> {
-                if (channel.eventLoop().inEventLoop()) {
-                    eventManager.post(new PingSendEvent(player, id));
-                    channel.writeAndFlush(packet);
-                } else {
-                    channel.eventLoop().execute(() -> {
+            this.getChannel(player).ifPresent(channel ->
+                    ChannelUtils.runInEventLoop(channel, () -> {
                         eventManager.post(new PingSendEvent(player, pingId));
                         channel.writeAndFlush(packet);
-                    });
-                }
-            });
+                    })
+            );
         } catch (Exception ex) {
             this.logger.severe(String.format("Failed to send ping! Player:%s Id:%o", player, id));
             ex.printStackTrace();

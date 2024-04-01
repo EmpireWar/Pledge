@@ -12,6 +12,7 @@ plugins {
 dependencies {
     api(project(":common"))
     compileOnly(libs.org.spongepowered.spongeapi)
+    testImplementation(libs.org.spongepowered.spongeapi)
 }
 
 tasks {

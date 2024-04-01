@@ -5,6 +5,7 @@ import dev.thomazz.pledge.packet.PingPacketProvider;
 import dev.thomazz.pledge.pinger.data.Ping;
 import dev.thomazz.pledge.pinger.data.PingData;
 import dev.thomazz.pledge.pinger.data.PingOrder;
+import dev.thomazz.pledge.util.ChannelUtils;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -75,9 +76,8 @@ public class ClientPingerImpl<SP> implements ClientPinger<SP> {
         this.pingDataMap.remove(player);
     }
 
-    protected void ping(UUID player, Ping ping) {
-        this.api.getChannel(player).ifPresent(
-            channel -> channel.eventLoop().execute(() -> {
+    protected void ping(UUID  player, Ping ping) {
+        this.api.getChannel(player).ifPresent(channel -> ChannelUtils.runInEventLoop(channel, () -> {
                 this.api.sendPing(player, ping.getId());
                 this.getPingData(player).ifPresent(data -> data.offer(ping));
                 this.onSend(player, ping);
