@@ -10,6 +10,7 @@ import dev.thomazz.pledge.pinger.data.PingData;
 import dev.thomazz.pledge.pinger.data.PingOrder;
 import dev.thomazz.pledge.pinger.frame.data.Frame;
 import dev.thomazz.pledge.pinger.frame.data.FrameData;
+import dev.thomazz.pledge.util.ChannelUtils;
 import io.netty.channel.Channel;
 
 import java.util.ArrayList;
@@ -112,7 +113,7 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
 
     private void tryReadyHandler(UUID player) {
         this.api.getChannel(player).filter(Channel::isOpen).ifPresent(channel ->
-            channel.eventLoop().execute(() -> {
+            ChannelUtils.runInEventLoop(channel, () -> {
                 try {
                     ChannelMessageQueueHandler handler = channel.pipeline().get(ChannelMessageQueueHandler.class);
                     handler.setMode(QueueMode.ADD_LAST);
@@ -128,7 +129,7 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
         Optional<Frame> optionalFrame = frameData.continueFrame();
 
         this.api.getChannel(player).filter(Channel::isOpen).ifPresent(channel ->
-            channel.eventLoop().execute(() -> {
+            ChannelUtils.runInEventLoop(channel, () -> {
                 try {
                     ChannelMessageQueueHandler handler = channel.pipeline().get(ChannelMessageQueueHandler.class);
 
