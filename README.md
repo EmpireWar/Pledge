@@ -128,19 +128,13 @@ Feel free to open an issue if an incompatibility is found.
 # Dependency
 If you want to use this in your project, you can add it as a Maven dependency:
 
-```xml
-<repositories>
-  <repository>
-    <id>pledge-repo</id>
-    <url>https://raw.github.com/ThomasOM/Pledge/repository/</url>
-  </repository>
-</repositories>
+```kts
+repositories {
+    maven("https://repo.convallyria.com/snapshots/")
+}
 
-<dependencies>
-  <dependency>
-    <groupId>dev.thomazz</groupId>
-    <artifactId>pledge</artifactId>
-    <version>3.0</version>
-  </dependency>
-</dependencies>
+dependencies {
+    implementation("org.empirewar.pledge:PLATFORM:3.1")
+}
 ```
+

@@ -38,7 +38,7 @@ dependencies {
 }
 
 group = "dev.thomazz"
-version = "3.0"
+version = "3.1"
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 
 java {
