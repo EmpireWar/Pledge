@@ -19,6 +19,10 @@ tasks {
     build {
         dependsOn(shadowJar)
     }
+
+    test {
+        useJUnitPlatform()
+    }
 }
 
 group = "dev.thomazz.pledge"

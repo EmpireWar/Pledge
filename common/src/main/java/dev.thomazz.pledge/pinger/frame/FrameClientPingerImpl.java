@@ -1,8 +1,8 @@
 package dev.thomazz.pledge.pinger.frame;
 
 import dev.thomazz.pledge.Pledge;
-import dev.thomazz.pledge.network.queue.ChannelMessageQueueHandler;
-import dev.thomazz.pledge.network.queue.ChannelMessageQueuePrimer;
+import dev.thomazz.pledge.network.queue.MessageQueueHandler;
+import dev.thomazz.pledge.network.queue.MessageQueuePrimer;
 import dev.thomazz.pledge.network.queue.QueueMode;
 import dev.thomazz.pledge.pinger.ClientPingerImpl;
 import dev.thomazz.pledge.pinger.data.Ping;
@@ -38,16 +38,36 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
     @Override
     public void registerPlayer(SP player) {
         super.registerPlayer(player);
-        final UUID uuid = api.asUUID(player);
-        this.injectPlayer(uuid);
-        this.frameDataMap.put(uuid, new FrameData());
+        this.frameDataMap.put(api.asUUID(player), new FrameData());
     }
 
     @Override
     public void unregisterPlayer(UUID player) {
         super.unregisterPlayer(player);
-        this.ejectPlayer(player);
         this.frameDataMap.remove(player);
+    }
+
+    @Override
+    protected void injectPlayer(UUID player) {
+        MessageQueueHandler queueHandler = new MessageQueueHandler();
+        MessageQueuePrimer queuePrimer = new MessageQueuePrimer(api, queueHandler);
+        this.api.getChannel(player).ifPresent(channel ->
+                ChannelUtils.runInEventLoop(channel, () ->
+                        channel.pipeline()
+                                .addFirst("pledge_queue_handler", queueHandler)
+                                .addLast("pledge_queue_primer", queuePrimer)
+                )
+        );
+    }
+
+    @Override
+    protected void ejectPlayer(UUID player) {
+        this.api.getChannel(player).ifPresent(channel ->
+            ChannelUtils.runInEventLoop(channel, () -> {
+                channel.pipeline().remove(MessageQueueHandler.class);
+                channel.pipeline().remove(MessageQueuePrimer.class);
+            })
+        );
     }
 
     @Override
@@ -115,7 +135,7 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
         this.api.getChannel(player).filter(Channel::isOpen).ifPresent(channel ->
             ChannelUtils.runInEventLoop(channel, () -> {
                 try {
-                    ChannelMessageQueueHandler handler = channel.pipeline().get(ChannelMessageQueueHandler.class);
+                    MessageQueueHandler handler = channel.pipeline().get(MessageQueueHandler.class);
                     handler.setMode(QueueMode.ADD_LAST);
                 } catch (Exception ex) {
                     this.api.logger().severe("Unable to ready handler for player: " + player);
@@ -131,20 +151,22 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
         this.api.getChannel(player).filter(Channel::isOpen).ifPresent(channel ->
             ChannelUtils.runInEventLoop(channel, () -> {
                 try {
-                    ChannelMessageQueueHandler handler = channel.pipeline().get(ChannelMessageQueueHandler.class);
+                    MessageQueueHandler handler = channel.pipeline().get(MessageQueueHandler.class);
 
-                    if (optionalFrame.isPresent()) {
-                        Frame frame = optionalFrame.get();
-                        this.frameListener.forEach(listener -> listener.onFrameSend(player, frame));
+                    if (handler != null) {
+                        if (optionalFrame.isPresent()) {
+                            Frame frame = optionalFrame.get();
+                            this.frameListener.forEach(listener -> listener.onFrameSend(player, frame));
 
-                        // Wrap by ping packets
-                        handler.setMode(QueueMode.ADD_FIRST);
-                        this.ping(player, new Ping(PingOrder.TICK_START, frame.getStartId()));
-                        handler.setMode(QueueMode.ADD_LAST);
-                        this.ping(player, new Ping(PingOrder.TICK_END, frame.getEndId()));
+                            // Wrap by ping packets
+                            handler.setMode(QueueMode.ADD_FIRST);
+                            this.ping(player, channel, new Ping(PingOrder.TICK_START, frame.getStartId()));
+                            handler.setMode(QueueMode.ADD_LAST);
+                            this.ping(player, channel, new Ping(PingOrder.TICK_END, frame.getEndId()));
+                        }
+
+                        handler.drain(channel.pipeline().context(handler), flush);
                     }
-
-                    handler.drain(channel.pipeline().context(handler), flush);
                 } catch (Exception ex) {
                     this.api.logger().severe("Unable to drain message queue from player: " + player);
                     ex.printStackTrace();
@@ -157,23 +179,5 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
         Frame frame = new Frame(data.pullId(), data.pullId());
         this.frameListener.forEach(listener -> listener.onFrameCreate(player, frame));
         return frame;
-    }
-
-    private void injectPlayer(UUID player) {
-        ChannelMessageQueueHandler queueHandler = new ChannelMessageQueueHandler();
-        ChannelMessageQueuePrimer queuePrimer = new ChannelMessageQueuePrimer(api, queueHandler);
-        this.api.getChannel(player).map(Channel::pipeline).ifPresent(pipe ->
-                pipe.addFirst("pledge_queue_handler", queueHandler)
-                        .addLast("pledge_queue_primer", queuePrimer)
-        );
-    }
-
-    private void ejectPlayer(UUID player) {
-        this.api.getChannel(player).ifPresent(
-            channel -> {
-                channel.pipeline().remove(ChannelMessageQueueHandler.class);
-                channel.pipeline().remove(ChannelMessageQueuePrimer.class);
-            }
-        );
     }
 }

@@ -1,11 +1,13 @@
 package dev.thomazz.pledge.pinger;
 
 import dev.thomazz.pledge.Pledge;
+import dev.thomazz.pledge.network.NetworkPacketConsolidator;
 import dev.thomazz.pledge.packet.PingPacketProvider;
 import dev.thomazz.pledge.pinger.data.Ping;
 import dev.thomazz.pledge.pinger.data.PingData;
 import dev.thomazz.pledge.pinger.data.PingOrder;
 import dev.thomazz.pledge.util.ChannelUtils;
+import io.netty.channel.Channel;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -68,21 +70,41 @@ public class ClientPingerImpl<SP> implements ClientPinger<SP> {
 
     public void registerPlayer(SP player) {
         if (this.playerFilter.test(player)) {
-            this.pingDataMap.put(api.asUUID(player), new PingData(api.asUUID(player),this));
+            final UUID uuid = api.asUUID(player);
+            this.injectPlayer(uuid);
+            this.pingDataMap.put(uuid, new PingData(uuid,this));
         }
     }
 
     public void unregisterPlayer(UUID player) {
         this.pingDataMap.remove(player);
+        this.ejectPlayer(player);
     }
 
-    protected void ping(UUID  player, Ping ping) {
-        this.api.getChannel(player).ifPresent(channel -> ChannelUtils.runInEventLoop(channel, () -> {
-                this.api.sendPing(player, ping.getId());
-                this.getPingData(player).ifPresent(data -> data.offer(ping));
-                this.onSend(player, ping);
-            })
+    protected void injectPlayer(UUID player) {
+        this.api.getChannel(player).ifPresent(channel ->
+                ChannelUtils.runInEventLoop(channel,
+                        () -> channel.pipeline().addLast("pledge_tick_consolidator", new NetworkPacketConsolidator(api))
+                )
         );
+    }
+
+    protected void ejectPlayer(UUID player) {
+        this.api.getChannel(player).ifPresent(channel ->
+                ChannelUtils.runInEventLoop(channel,
+                        () -> channel.pipeline().remove(NetworkPacketConsolidator.class)
+                )
+        );
+    }
+
+    protected void ping(UUID player, Channel channel, Ping ping) {
+        if (!channel.eventLoop().inEventLoop()) {
+            throw new IllegalStateException("Tried to run ping outside event loop!");
+        }
+
+        this.api.sendPingRaw(player, channel, ping.getId());
+        this.getPingData(player).ifPresent(data -> data.offer(ping));
+        this.onSend(player, ping);
     }
 
     public boolean isInRange(int id) {
@@ -132,10 +154,31 @@ public class ClientPingerImpl<SP> implements ClientPinger<SP> {
     }
 
     public void tickStart() {
-        this.pingDataMap.forEach((player, data) -> this.ping(player, new Ping(PingOrder.TICK_START, data.pullId())));
+        this.pingDataMap.forEach((player, data) ->
+                this.api.getChannel(player).ifPresent(channel ->
+                        ChannelUtils.runInEventLoop(channel, () -> {
+                            NetworkPacketConsolidator consolidator = channel.pipeline().get(NetworkPacketConsolidator.class);
+                            if (consolidator != null) {
+                                consolidator.open();
+                                this.ping(player, channel, new Ping(PingOrder.TICK_START, data.pullId()));
+                                consolidator.drain(channel.pipeline().lastContext());
+                            }
+                        })
+                )
+        );
     }
 
     public void tickEnd() {
-        this.pingDataMap.forEach((player, data) -> this.ping(player, new Ping(PingOrder.TICK_END, data.pullId())));
+        this.pingDataMap.forEach((player, data) ->
+                this.api.getChannel(player).ifPresent(channel ->
+                        ChannelUtils.runInEventLoop(channel, () -> {
+                            NetworkPacketConsolidator consolidator = channel.pipeline().get(NetworkPacketConsolidator.class);
+                            if (consolidator != null) {
+                                this.ping(player, channel, new Ping(PingOrder.TICK_END, data.pullId()));
+                                consolidator.close();
+                            }
+                        })
+                )
+        );
     }
 }

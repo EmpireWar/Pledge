@@ -1,7 +1,7 @@
 package dev.thomazz.pledge;
 
 import dev.thomazz.pledge.event.EventProvider;
-import dev.thomazz.pledge.network.queue.PacketQueueWhitelist;
+import dev.thomazz.pledge.network.queue.PacketFiltering;
 import dev.thomazz.pledge.packet.PingPacketProvider;
 import dev.thomazz.pledge.pinger.ClientPinger;
 import dev.thomazz.pledge.pinger.frame.FrameClientPinger;
@@ -30,6 +30,8 @@ public interface Pledge<SP> {
     }
 
     void sendPing(@NotNull UUID player, int id);
+
+    void sendPingRaw(@NotNull UUID player, @NotNull Channel channel, int pingId);
 
     /**
      * Gets the networking channel for a {@link SP} if available.
@@ -73,7 +75,7 @@ public interface Pledge<SP> {
 
     MinecraftReflectionProvider getReflectionProvider();
 
-    PacketQueueWhitelist getPacketQueueWhitelist();
+    PacketFiltering getPacketFilter();
 
     UUID asUUID(SP player);
 

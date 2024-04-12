@@ -10,3 +10,9 @@ plugins {
 
 group = "dev.thomazz.pledge"
 description = "common"
+
+tasks {
+    test {
+        useJUnitPlatform()
+    }
+}

@@ -3,7 +3,7 @@ package dev.thomazz.pledge.sponge;
 import dev.thomazz.pledge.Pledge;
 import dev.thomazz.pledge.event.EventProvider;
 import dev.thomazz.pledge.network.NetworkPongListener;
-import dev.thomazz.pledge.network.queue.PacketQueueWhitelist;
+import dev.thomazz.pledge.network.queue.PacketFiltering;
 import dev.thomazz.pledge.packet.PacketProviderFactory;
 import dev.thomazz.pledge.packet.PingPacketProvider;
 import dev.thomazz.pledge.pinger.ClientPinger;
@@ -46,7 +46,7 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 @Getter
-public final class PledgeSponge implements Pledge<User> {
+public class PledgeSponge implements Pledge<User> {
 
     /**
      * Creates a new API instance using the provided plugin to register listeners.
@@ -58,7 +58,7 @@ public final class PledgeSponge implements Pledge<User> {
      */
     public static Pledge<User> getOrCreate(@NotNull PluginContainer plugin) {
         if (PledgeSponge.instance == null) {
-            PledgeSponge.instance = new PledgeSponge(plugin).start();
+            PledgeSponge.instance = new PledgeSponge(plugin);
         }
 
         return PledgeSponge.instance;
@@ -67,7 +67,7 @@ public final class PledgeSponge implements Pledge<User> {
     static PledgeSponge instance;
 
     private final Logger logger;
-    private final PacketQueueWhitelist whitelist;
+    private final PacketFiltering whitelist;
     private final ChannelAccessProvider channelAccessProvider;
     private final PingPacketProvider packetProvider;
 
@@ -79,7 +79,7 @@ public final class PledgeSponge implements Pledge<User> {
 
     PledgeSponge(PluginContainer plugin) {
         this.logger = Logger.getLogger(plugin.metadata().id());
-        this.whitelist = new PacketQueueWhitelist(this);
+        this.whitelist = new PacketFiltering(this);
         this.channelAccessProvider = new ChannelAccessProvider(this);
         this.packetProvider = PacketProviderFactory.buildPingProvider(this);
 
@@ -91,6 +91,10 @@ public final class PledgeSponge implements Pledge<User> {
                 .interval(Ticks.single()).execute(() -> eventManager.post(new TickStartEvent())).build(), "Pledge Tick Start");
         this.endTask = TickEndTask.create(() -> eventManager.post(new TickEndEvent()));
 
+        // Setup for all players
+        Sponge.server().onlinePlayers().forEach(player -> this.setupPlayer(player.user(), player.connection()));
+
+        // Register as listener after setup
         Sponge.eventManager().registerListeners(plugin, this);
     }
 
@@ -115,12 +119,6 @@ public final class PledgeSponge implements Pledge<User> {
 
         // Unregister from client pingers
         this.clientPingers.forEach(pinger -> pinger.unregisterPlayer(player.uniqueId()));
-    }
-
-    PledgeSponge start() {
-        // Setup for all players
-        Sponge.server().onlinePlayers().forEach(player -> this.setupPlayer(player.user(), player.connection()));
-        return this;
     }
 
     @Listener(order = Order.LATE)
@@ -159,24 +157,26 @@ public final class PledgeSponge implements Pledge<User> {
 
     @Override
     public void sendPing(@NotNull UUID player, int id) {
+        // Keep within ranges
+        int max = Math.max(this.packetProvider.getUpperBound(), this.packetProvider.getLowerBound());
+        int min = Math.min(this.packetProvider.getUpperBound(), this.packetProvider.getLowerBound());
+        int pingId = Math.max(Math.min(id, max), min);
+
+        // Run on channel event loop
+        this.getChannel(player).ifPresent(channel ->
+                ChannelUtils.runInEventLoop(channel, () ->
+                        this.sendPingRaw(player, channel, pingId)
+                )
+        );
+    }
+
+    public void sendPingRaw(@NotNull UUID player, @NotNull Channel channel, int pingId) {
         try {
-            final EventManager eventManager = Sponge.eventManager();
-            Object packet = this.packetProvider.buildPacket(id);
-
-            // Keep within ranges
-            int max = Math.max(this.packetProvider.getUpperBound(), this.packetProvider.getLowerBound());
-            int min = Math.min(this.packetProvider.getUpperBound(), this.packetProvider.getLowerBound());
-            int pingId = Math.max(Math.min(id, max), min);
-
-            // Run on channel event loop
-            this.getChannel(player).ifPresent(channel ->
-                    ChannelUtils.runInEventLoop(channel, () -> {
-                        eventManager.post(new PingSendEvent(player, pingId));
-                        channel.writeAndFlush(packet);
-                    })
-            );
+            Object packet = this.packetProvider.buildPacket(pingId);
+            Sponge.eventManager().post(new PingSendEvent(player, pingId));
+            channel.writeAndFlush(packet);
         } catch (Exception ex) {
-            this.logger.severe(String.format("Failed to send ping! Player:%s Id:%o", player, id));
+            this.logger.severe(String.format("Failed to send ping! Player:%s Id:%o", player, pingId));
             ex.printStackTrace();
         }
     }
@@ -236,7 +236,7 @@ public final class PledgeSponge implements Pledge<User> {
     }
 
     @Override
-    public PacketQueueWhitelist getPacketQueueWhitelist() {
+    public PacketFiltering getPacketFilter() {
         return whitelist;
     }
 

@@ -19,6 +19,10 @@ tasks {
     build {
         dependsOn(shadowJar)
     }
+
+    test {
+        useJUnitPlatform()
+    }
 }
 
 java.targetCompatibility = JavaVersion.VERSION_17

@@ -1,5 +1,6 @@
 package dev.thomazz.pledge.network.queue;
 
+import dev.thomazz.pledge.network.NetworkMessage;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
@@ -12,18 +13,18 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 @Setter
 @Getter
-public class ChannelMessageQueueHandler extends ChannelOutboundHandlerAdapter {
-    private final Deque<QueuedMessage> messageQueue = new ConcurrentLinkedDeque<>();
+public class MessageQueueHandler extends ChannelOutboundHandlerAdapter {
+    private final Deque<NetworkMessage> messageQueue = new ConcurrentLinkedDeque<>();
     private QueueMode mode = QueueMode.PASS;
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         switch (this.mode) {
             case ADD_FIRST:
-                this.messageQueue.addFirst(new QueuedMessage(msg, promise));
+                this.messageQueue.addFirst(NetworkMessage.of(msg, promise));
                 break;
             case ADD_LAST:
-                this.messageQueue.addLast(new QueuedMessage(msg, promise));
+                this.messageQueue.addLast(NetworkMessage.of(msg, promise));
                 break;
             default:
             case PASS:
@@ -40,16 +41,10 @@ public class ChannelMessageQueueHandler extends ChannelOutboundHandlerAdapter {
 
     public void drain(ChannelHandlerContext ctx, boolean flush) {
         while (!this.messageQueue.isEmpty()) {
-            QueuedMessage message = this.messageQueue.poll();
-            ctx.write(message.message, message.promise);
+            NetworkMessage message = this.messageQueue.poll();
+            ctx.write(message.getMessage(), message.getPromise());
         }
 
         if (flush) ctx.flush();
-    }
-
-    @RequiredArgsConstructor
-    private static final class QueuedMessage {
-        private final Object message;
-        private final ChannelPromise promise;
     }
 }

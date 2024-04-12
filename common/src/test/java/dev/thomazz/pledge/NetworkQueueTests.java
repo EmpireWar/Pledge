@@ -1,13 +1,11 @@
 package dev.thomazz.pledge;
 
-import dev.thomazz.pledge.network.queue.ChannelMessageQueueHandler;
+import dev.thomazz.pledge.network.queue.MessageQueueHandler;
 import dev.thomazz.pledge.network.queue.QueueMode;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.embedded.EmbeddedChannel;
-import io.netty.handler.flow.FlowControlHandler;
-import io.netty.handler.flush.FlushConsolidationHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -24,13 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class NetworkQueueTests {
     private EmbeddedChannel channel;
-    private ChannelMessageQueueHandler queueHandler;
+    private MessageQueueHandler queueHandler;
     private TestChannelOutboundHandler testHandler;
 
     @BeforeEach
     public void setup() {
         this.testHandler = new TestChannelOutboundHandler();
-        this.queueHandler = new ChannelMessageQueueHandler();
+        this.queueHandler = new MessageQueueHandler();
     }
 
     @Test

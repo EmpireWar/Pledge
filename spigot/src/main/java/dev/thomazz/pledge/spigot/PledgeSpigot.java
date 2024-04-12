@@ -3,7 +3,7 @@ package dev.thomazz.pledge.spigot;
 import dev.thomazz.pledge.Pledge;
 import dev.thomazz.pledge.event.EventProvider;
 import dev.thomazz.pledge.network.NetworkPongListener;
-import dev.thomazz.pledge.network.queue.PacketQueueWhitelist;
+import dev.thomazz.pledge.network.queue.PacketFiltering;
 import dev.thomazz.pledge.packet.PacketProviderFactory;
 import dev.thomazz.pledge.packet.PingPacketProvider;
 import dev.thomazz.pledge.pinger.ClientPinger;
@@ -45,7 +45,7 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 @Getter
-public final class PledgeSpigot implements Pledge<Player>, Listener {
+public class PledgeSpigot implements Pledge<Player>, Listener {
 
     /**
      * Creates a new API instance using the provided plugin to register listeners.
@@ -57,7 +57,7 @@ public final class PledgeSpigot implements Pledge<Player>, Listener {
      */
     public static Pledge<Player> getOrCreate(@NotNull Plugin plugin) {
         if (PledgeSpigot.instance == null) {
-            PledgeSpigot.instance = new PledgeSpigot(plugin).start();
+            PledgeSpigot.instance = new PledgeSpigot(plugin);
         }
 
         return PledgeSpigot.instance;
@@ -66,7 +66,7 @@ public final class PledgeSpigot implements Pledge<Player>, Listener {
     static PledgeSpigot instance;
 
     private final Logger logger;
-    private final PacketQueueWhitelist whitelist;
+    private final PacketFiltering whitelist;
     private final ChannelAccessProvider channelAccessProvider;
     private final PingPacketProvider packetProvider;
 
@@ -78,7 +78,7 @@ public final class PledgeSpigot implements Pledge<Player>, Listener {
 
     PledgeSpigot(Plugin plugin) {
         this.logger = plugin.getLogger();
-        this.whitelist = new PacketQueueWhitelist(this);
+        this.whitelist = new PacketFiltering(this);
         this.channelAccessProvider = new ChannelAccessProvider(this);
         this.packetProvider = PacketProviderFactory.buildPingProvider(this);
 
@@ -89,6 +89,10 @@ public final class PledgeSpigot implements Pledge<Player>, Listener {
         this.startTask = scheduler.runTaskTimer(plugin, () -> manager.callEvent(new TickStartEvent()), 0L, 1L);
         this.endTask = TickEndTask.create(() -> manager.callEvent(new TickEndEvent()));
 
+        // Setup for all players
+        Bukkit.getOnlinePlayers().forEach(this::setupPlayer);
+
+        // Register as listener after setup
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
@@ -117,12 +121,6 @@ public final class PledgeSpigot implements Pledge<Player>, Listener {
 
         // Unregister from client pingers
         this.clientPingers.forEach(pinger -> pinger.unregisterPlayer(player.getUniqueId()));
-    }
-
-    PledgeSpigot start() {
-        // Setup for all players
-        Bukkit.getOnlinePlayers().forEach(this::setupPlayer);
-        return this;
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -161,24 +159,26 @@ public final class PledgeSpigot implements Pledge<Player>, Listener {
 
     @Override
     public void sendPing(@NotNull UUID player, int id) {
+        // Keep within ranges
+        int max = Math.max(this.packetProvider.getUpperBound(), this.packetProvider.getLowerBound());
+        int min = Math.min(this.packetProvider.getUpperBound(), this.packetProvider.getLowerBound());
+        int pingId = Math.max(Math.min(id, max), min);
+
+        // Run on channel event loop
+        this.getChannel(player).ifPresent(channel ->
+                ChannelUtils.runInEventLoop(channel, () ->
+                        this.sendPingRaw(player, channel, pingId)
+                )
+        );
+    }
+
+    public void sendPingRaw(@NotNull UUID player, @NotNull Channel channel, int pingId) {
         try {
-            PluginManager pluginManager = Bukkit.getServer().getPluginManager();
-            Object packet = this.packetProvider.buildPacket(id);
-
-            // Keep within ranges
-            int max = Math.max(this.packetProvider.getUpperBound(), this.packetProvider.getLowerBound());
-            int min = Math.min(this.packetProvider.getUpperBound(), this.packetProvider.getLowerBound());
-            int pingId = Math.max(Math.min(id, max), min);
-
-            // Run on channel event loop
-            this.getChannel(player).ifPresent(channel ->
-                    ChannelUtils.runInEventLoop(channel, () -> {
-                        pluginManager.callEvent(new PingSendEvent(player, pingId));
-                        channel.writeAndFlush(packet);
-                    })
-            );
+            Object packet = this.packetProvider.buildPacket(pingId);
+            Bukkit.getPluginManager().callEvent(new PingSendEvent(player, pingId));
+            channel.writeAndFlush(packet);
         } catch (Exception ex) {
-            this.logger.severe(String.format("Failed to send ping! Player:%s Id:%o", player, id));
+            this.logger.severe(String.format("Failed to send ping! Player:%s Id:%o", player, pingId));
             ex.printStackTrace();
         }
     }
@@ -238,7 +238,7 @@ public final class PledgeSpigot implements Pledge<Player>, Listener {
     }
 
     @Override
-    public PacketQueueWhitelist getPacketQueueWhitelist() {
+    public PacketFiltering getPacketFilter() {
         return whitelist;
     }
 
