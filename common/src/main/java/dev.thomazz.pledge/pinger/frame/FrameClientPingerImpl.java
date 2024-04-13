@@ -4,6 +4,7 @@ import dev.thomazz.pledge.Pledge;
 import dev.thomazz.pledge.network.queue.MessageQueueHandler;
 import dev.thomazz.pledge.network.queue.MessageQueuePrimer;
 import dev.thomazz.pledge.network.queue.QueueMode;
+import dev.thomazz.pledge.packet.PacketBundleBuilder;
 import dev.thomazz.pledge.pinger.ClientPingerImpl;
 import dev.thomazz.pledge.pinger.data.Ping;
 import dev.thomazz.pledge.pinger.data.PingData;
@@ -12,6 +13,7 @@ import dev.thomazz.pledge.pinger.frame.data.Frame;
 import dev.thomazz.pledge.pinger.frame.data.FrameData;
 import dev.thomazz.pledge.util.ChannelUtils;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -157,8 +159,8 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
         this.api.getChannel(player).filter(Channel::isOpen).ifPresent(channel ->
             ChannelUtils.runInEventLoop(channel, () -> {
                 try {
-                    MessageQueueHandler handler = channel.pipeline().get(MessageQueueHandler.class);
-
+                    final MessageQueueHandler handler = channel.pipeline().get(MessageQueueHandler.class);
+                    final ChannelHandlerContext context = channel.pipeline().context(handler);
                     if (handler != null) {
                         if (optionalFrame.isPresent()) {
                             Frame frame = optionalFrame.get();
@@ -169,9 +171,16 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
                             this.ping(player, channel, new Ping(PingOrder.TICK_START, frame.getStartId()));
                             handler.setMode(QueueMode.ADD_LAST);
                             this.ping(player, channel, new Ping(PingOrder.TICK_END, frame.getEndId()));
+
+                            if (frame.isBundle() && api.supportsBundles()) {
+                                handler.setMode(QueueMode.ADD_FIRST);
+                                channel.write(PacketBundleBuilder.INSTANCE.buildDelimiter());
+                                handler.setMode(QueueMode.ADD_LAST);
+                                channel.write(PacketBundleBuilder.INSTANCE.buildDelimiter());
+                            }
                         }
 
-                        handler.drain(channel.pipeline().context(handler), flush);
+                        handler.drain(context, flush);
                     }
                 } catch (Exception ex) {
                     this.api.logger().severe("Unable to drain message queue from player: " + player);

@@ -176,7 +176,7 @@ public class PledgeSpigot implements Pledge<Player>, Listener {
         try {
             Object packet = this.packetProvider.buildPacket(pingId);
             Bukkit.getPluginManager().callEvent(new PingSendEvent(player, pingId));
-            channel.writeAndFlush(packet);
+            channel.write(packet);
         } catch (Exception ex) {
             this.logger.severe(String.format("Failed to send ping! Player:%s Id:%o", player, pingId));
             ex.printStackTrace();

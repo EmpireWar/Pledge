@@ -2,6 +2,7 @@ package dev.thomazz.pledge;
 
 import dev.thomazz.pledge.event.EventProvider;
 import dev.thomazz.pledge.network.queue.PacketFiltering;
+import dev.thomazz.pledge.packet.PacketBundleBuilder;
 import dev.thomazz.pledge.packet.PingPacketProvider;
 import dev.thomazz.pledge.pinger.ClientPinger;
 import dev.thomazz.pledge.pinger.frame.FrameClientPinger;
@@ -17,6 +18,10 @@ import java.util.logging.Logger;
  * Main API object
  */
 public interface Pledge<SP> {
+
+    default boolean supportsBundles() {
+        return PacketBundleBuilder.INSTANCE.isSupported();
+    }
 
     /**
      * Sends a player a ping packet with a certain ID.

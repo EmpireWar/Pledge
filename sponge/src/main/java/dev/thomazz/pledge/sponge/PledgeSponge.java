@@ -174,7 +174,7 @@ public class PledgeSponge implements Pledge<User> {
         try {
             Object packet = this.packetProvider.buildPacket(pingId);
             Sponge.eventManager().post(new PingSendEvent(player, pingId));
-            channel.writeAndFlush(packet);
+            channel.write(packet);
         } catch (Exception ex) {
             this.logger.severe(String.format("Failed to send ping! Player:%s Id:%o", player, pingId));
             ex.printStackTrace();
