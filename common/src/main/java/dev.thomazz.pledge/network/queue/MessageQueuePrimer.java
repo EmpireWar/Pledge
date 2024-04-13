@@ -17,12 +17,12 @@ public class MessageQueuePrimer extends ChannelOutboundHandlerAdapter {
         // Let whitelisted packets pass through the queue
         if (pledge.getPacketFilter().isWhitelistedFromQueue(msg) || pledge.getPacketFilter().isLoginPacket(msg)) {
             QueueMode lastMode = this.queueHandler.getMode();
-            this.queueHandler.setMode(QueueMode.PASS);
             try {
+                this.queueHandler.setMode(QueueMode.PASS);
                 super.write(ctx, msg, promise);
-                super.flush(ctx);
             } finally {
                 this.queueHandler.setMode(lastMode);
+                super.flush(ctx);
             }
             return;
         }
