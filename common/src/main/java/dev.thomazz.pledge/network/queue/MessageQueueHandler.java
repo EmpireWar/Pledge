@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 public class MessageQueueHandler extends ChannelOutboundHandlerAdapter {
     private final Deque<NetworkMessage> messageQueue = new ConcurrentLinkedDeque<>();
     private QueueMode mode = QueueMode.PASS;
+    private boolean flushable;
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
@@ -34,6 +35,12 @@ public class MessageQueueHandler extends ChannelOutboundHandlerAdapter {
     }
 
     @Override
+    public void flush(ChannelHandlerContext ctx) throws Exception {
+        if (!flushable) return;
+        super.flush(ctx);
+    }
+
+    @Override
     public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
         this.drain(ctx, true);
         super.close(ctx, promise);
@@ -45,6 +52,10 @@ public class MessageQueueHandler extends ChannelOutboundHandlerAdapter {
             ctx.write(message.getMessage(), message.getPromise());
         }
 
-        if (flush) ctx.flush();
+        if (flush) {
+            flushable = true;
+            ctx.flush();
+            flushable = false;
+        }
     }
 }

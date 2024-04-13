@@ -20,7 +20,9 @@ public class MessageQueuePrimer extends ChannelOutboundHandlerAdapter {
             this.queueHandler.setMode(QueueMode.PASS);
             try {
                 super.write(ctx, msg, promise);
+                queueHandler.setFlushable(true);
                 super.flush(ctx);
+                queueHandler.setFlushable(false);
             } finally {
                 this.queueHandler.setMode(lastMode);
             }

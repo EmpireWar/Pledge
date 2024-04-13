@@ -52,11 +52,17 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
         MessageQueueHandler queueHandler = new MessageQueueHandler();
         MessageQueuePrimer queuePrimer = new MessageQueuePrimer(api, queueHandler);
         this.api.getChannel(player).ifPresent(channel ->
-                ChannelUtils.runInEventLoop(channel, () ->
+                ChannelUtils.runInEventLoop(channel, () -> {
+                    if (channel.pipeline().context("prepender") != null) {
+                        channel.pipeline()
+                                .addAfter("prepender", "pledge_queue_handler", queueHandler)
+                                .addAfter("encoder", "pledge_queue_primer", queuePrimer);
+                    } else {
                         channel.pipeline()
                                 .addFirst("pledge_queue_handler", queueHandler)
-                                .addLast("pledge_queue_primer", queuePrimer)
-                )
+                                .addLast("pledge_queue_primer", queuePrimer);
+                    }
+                })
         );
     }
 
