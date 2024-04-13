@@ -15,20 +15,20 @@ public class MessageQueuePrimer extends ChannelOutboundHandlerAdapter {
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         // Let whitelisted packets pass through the queue
-        if (pledge.getPacketFilter().isWhitelistedFromQueue(msg)) {
+        if (pledge.getPacketFilter().isWhitelistedFromQueue(msg) || pledge.getPacketFilter().isLoginPacket(msg)) {
             QueueMode lastMode = this.queueHandler.getMode();
             this.queueHandler.setMode(QueueMode.PASS);
             try {
                 super.write(ctx, msg, promise);
-                queueHandler.setFlushable(true);
                 super.flush(ctx);
-                queueHandler.setFlushable(false);
             } finally {
                 this.queueHandler.setMode(lastMode);
             }
             return;
         }
 
+        this.queueHandler.setNextPacketType(msg.getClass());
         super.write(ctx, msg, promise);
     }
+
 }

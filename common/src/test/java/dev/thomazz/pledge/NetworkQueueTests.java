@@ -33,7 +33,7 @@ public class NetworkQueueTests {
 
     @Test
     @Order(1)
-    public void testDrain() {
+    public void testDrain() throws Exception {
         this.channel = new EmbeddedChannel(this.testHandler, this.queueHandler);
 
         this.queueHandler.setMode(QueueMode.ADD_LAST);

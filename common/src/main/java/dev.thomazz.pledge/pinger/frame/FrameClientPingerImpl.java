@@ -58,7 +58,7 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
                     if (channel.pipeline().context("prepender") != null) {
                         channel.pipeline()
                                 .addAfter("prepender", "pledge_queue_handler", queueHandler)
-                                .addAfter("encoder", "pledge_queue_primer", queuePrimer);
+                                .addLast("pledge_queue_primer", queuePrimer);
                     } else {
                         channel.pipeline()
                                 .addFirst("pledge_queue_handler", queueHandler)
@@ -123,11 +123,14 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
         Objects.requireNonNull(pingData);
         Objects.requireNonNull(frameData);
 
+        Frame frame;
         if (!frameData.hasFrame()) {
-            frameData.setFrame(this.createFrame(player, pingData));
+            frameData.setFrame(frame = this.createFrame(player, pingData));
+        } else {
+            frame = frameData.getFrame();
         }
 
-        return frameData.getFrame();
+        return frame;
     }
 
     @Override
@@ -166,13 +169,20 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
                             Frame frame = optionalFrame.get();
                             this.frameListener.forEach(listener -> listener.onFrameSend(player, frame));
 
+                            frame.setBundle(frame.isBundle() && api.supportsBundles());
+
+                            if (frame.isBundle()) {
+                                // Remove bundles that would interfere with our wrapping bundles.
+                                handler.stripBundles();
+                            }
+
                             // Wrap by ping packets
                             handler.setMode(QueueMode.ADD_FIRST);
                             this.ping(player, channel, new Ping(PingOrder.TICK_START, frame.getStartId()));
                             handler.setMode(QueueMode.ADD_LAST);
                             this.ping(player, channel, new Ping(PingOrder.TICK_END, frame.getEndId()));
 
-                            if (frame.isBundle() && api.supportsBundles()) {
+                            if (frame.isBundle()) {
                                 handler.setMode(QueueMode.ADD_FIRST);
                                 channel.write(PacketBundleBuilder.INSTANCE.buildDelimiter());
                                 handler.setMode(QueueMode.ADD_LAST);

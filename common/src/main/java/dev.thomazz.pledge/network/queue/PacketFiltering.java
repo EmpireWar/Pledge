@@ -8,11 +8,22 @@ import java.util.List;
 public final class PacketFiltering {
 
     private final Pledge<?> pledge;
-    private final List<Class<?>> queueWhiteListPackets = buildQueueWhitelistPackets();
-    private final List<Class<?>> loginPackets = buildLoginPackets();
+    private final List<Class<?>> queueWhiteListPackets;
+    private final List<Class<?>> loginPackets;
 
     public PacketFiltering(Pledge<?> pledge) {
         this.pledge = pledge;
+
+        this.queueWhiteListPackets = buildQueueWhitelistPackets();
+        this.loginPackets = buildLoginPackets();
+
+        if (queueWhiteListPackets.isEmpty()) {
+            pledge.logger().warning("Failed to generate whitelist packets");
+        }
+
+        if (loginPackets.isEmpty()) {
+            pledge.logger().warning("Failed to generate login packets");
+        }
     }
 
     private List<Class<?>> buildQueueWhitelistPackets() {
@@ -34,7 +45,7 @@ public final class PacketFiltering {
     private void addGamePacket(ImmutableList.Builder<Class<?>> builder, String packetName) {
         try {
             builder.add(pledge.getReflectionProvider().gamePacket(packetName));
-        } catch (Exception ignored) {
+        } catch (ReflectiveOperationException ignored) {
         }
     }
 
