@@ -55,9 +55,13 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
         MessageQueuePrimer queuePrimer = new MessageQueuePrimer(api, queueHandler);
         this.api.getChannel(player).ifPresent(channel ->
                 ChannelUtils.runInEventLoop(channel, () -> {
-                    channel.pipeline()
-                            .addAfter("prepender", "pledge_queue_handler", queueHandler)
-                            .addLast("pledge_queue_primer", queuePrimer);
+                    channel.pipeline().addAfter("prepender", "pledge_queue_handler", queueHandler);
+                    if (api.supportsBundles()) {
+                        // Need to listen to bundle delimiters
+                        channel.pipeline().addBefore("unbundler", "pledge_queue_primer", queuePrimer);
+                    } else {
+                        channel.pipeline().addLast("pledge_queue_primer", queuePrimer);
+                    }
                 })
         );
     }
@@ -163,7 +167,7 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
                             }
                         }
 
-                        handler.drain(context, flush);
+                        if (channel.isOpen()) handler.drain(context, flush);
                     }
                 } catch (Exception ex) {
                     this.api.logger().severe("Unable to drain message queue from player: " + player);

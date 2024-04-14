@@ -16,6 +16,13 @@ public interface ClientPingerListener {
     default void onValidation(UUID player, int id) {}
 
     /**
+     * Called when a player sends an invalid transaction ID.
+     * @param player - Player that the ping response is received from
+     * @param id     - ID of ping
+     */
+    default void onError(UUID player, int id) {}
+
+    /**
      * Called when a ping is sent at the start of the tick to a player.
      * <p>
      * @param player - Player that the ping response is sent to

@@ -29,7 +29,7 @@ public class NetworkPacketConsolidator extends ChannelOutboundHandlerAdapter {
 
         // Check if started, some packets are whitelisted from being queued
         if (this.started && !this.open && !api.getPacketFilter().isWhitelistedFromQueue(msg)) {
-            this.messageQueue.add(NetworkMessage.of(msg, msg.getClass(), promise));
+            this.messageQueue.add(NetworkMessage.of(msg, promise));
             return;
         }
 

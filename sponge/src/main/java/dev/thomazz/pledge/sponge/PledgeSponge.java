@@ -151,7 +151,7 @@ public class PledgeSponge implements Pledge<User> {
             .forEach(
                 pinger -> pinger.getPingData(player)
                     .flatMap(data -> data.confirm(id))
-                    .ifPresent(pong -> pinger.onReceive(player, pong))
+                    .ifPresentOrElse(pong -> pinger.onReceive(player, pong), () -> pinger.onError(player, id))
             );
     }
 

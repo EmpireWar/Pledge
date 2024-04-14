@@ -137,6 +137,10 @@ public class ClientPingerImpl<SP> implements ClientPinger<SP> {
         }
     }
 
+    public void onError(UUID player, int id) {
+        this.pingListeners.forEach(listener -> listener.onError(player, id));
+    }
+
     protected void onSendStart(UUID player, int id) {
         this.pingListeners.forEach(listener -> listener.onPingSendStart(player, id));
     }

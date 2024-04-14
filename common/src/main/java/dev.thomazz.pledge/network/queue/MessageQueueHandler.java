@@ -17,16 +17,15 @@ public class MessageQueueHandler extends ChannelOutboundHandlerAdapter {
 
     private final Deque<NetworkMessage> messageQueue = new ConcurrentLinkedDeque<>();
     private QueueMode mode = QueueMode.PASS;
-    private Class<?> nextPacketType;
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         switch (this.mode) {
             case ADD_FIRST:
-                this.messageQueue.addFirst(NetworkMessage.of(msg, nextPacketType, promise));
+                this.messageQueue.addFirst(NetworkMessage.of(msg, promise));
                 break;
             case ADD_LAST:
-                this.messageQueue.addLast(NetworkMessage.of(msg, nextPacketType, promise));
+                this.messageQueue.addLast(NetworkMessage.of(msg, promise));
                 break;
             default:
             case PASS:
@@ -42,7 +41,8 @@ public class MessageQueueHandler extends ChannelOutboundHandlerAdapter {
     }
 
     public void stripBundles() {
-        messageQueue.removeIf(msg -> PacketBundleBuilder.INSTANCE.isDelimiter(msg.getPacketType()));
+        // Packet type can be null if a plugin in the pipeline added their own packets - no good way to handle this.
+        messageQueue.removeIf(msg -> msg.getPacketType() != null && PacketBundleBuilder.INSTANCE.isDelimiter(msg.getPacketType()));
     }
 
     public void drain(ChannelHandlerContext ctx, boolean flush) {

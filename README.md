@@ -1,3 +1,10 @@
+## EmpireWar's changes
+- Multi-platform support (Spigot, Sponge)
+- Bundle packet support that will only bundle when set (Frame#setBundle) and still functions properly with server sending bundle packets
+- Method to end packet frames and optionally flush
+- onError for listeners when an invalid transaction is received
+- Gradle project
+
 # Pledge
 A high performance and lightweight Bukkit packet tracking API for predicting when a server packet arrives at a client,
 using ping/pong and transaction packets.

@@ -1,6 +1,7 @@
 package dev.thomazz.pledge.network.queue;
 
 import dev.thomazz.pledge.Pledge;
+import dev.thomazz.pledge.packet.PacketBundleBuilder;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
@@ -14,11 +15,6 @@ public class MessageQueuePrimer extends ChannelOutboundHandlerAdapter {
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        // Set queue handler to add last after login
-        if (pledge.getPacketFilter().isLoginPacket(msg)) {
-            this.queueHandler.setMode(QueueMode.ADD_LAST);
-        }
-
         // Let whitelisted packets pass through the queue
         if (pledge.getPacketFilter().isWhitelistedFromQueue(msg) || pledge.getPacketFilter().isLoginPacket(msg)) {
             QueueMode lastMode = this.queueHandler.getMode();
@@ -26,18 +22,26 @@ public class MessageQueuePrimer extends ChannelOutboundHandlerAdapter {
                 this.queueHandler.setMode(QueueMode.PASS);
                 super.write(ctx, msg, promise);
             } finally {
-                this.queueHandler.setMode(lastMode);
+                this.queueHandler.setMode(pledge.getPacketFilter().isLoginPacket(msg) ? QueueMode.ADD_LAST : lastMode);
                 super.flush(ctx);
             }
             return;
         }
 
         try {
-            this.queueHandler.setNextPacketType(msg.getClass());
             super.write(ctx, msg, promise);
         } finally {
-            this.queueHandler.setNextPacketType(null);
+            // Support packets being added whilst writing a packet
+            switch (this.queueHandler.getMode()) {
+                case ADD_LAST:
+                    this.queueHandler.getMessageQueue().peekLast().setPacketType(msg.getClass());
+                    break;
+                case ADD_FIRST:
+                    this.queueHandler.getMessageQueue().peekFirst().setPacketType(msg.getClass());
+                    break;
+                case PASS:
+                    break;
+            }
         }
     }
-
 }
