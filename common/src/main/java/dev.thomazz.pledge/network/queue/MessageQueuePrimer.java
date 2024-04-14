@@ -14,6 +14,11 @@ public class MessageQueuePrimer extends ChannelOutboundHandlerAdapter {
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+        // Set queue handler to add last after login
+        if (pledge.getPacketFilter().isLoginPacket(msg)) {
+            this.queueHandler.setMode(QueueMode.ADD_LAST);
+        }
+
         // Let whitelisted packets pass through the queue
         if (pledge.getPacketFilter().isWhitelistedFromQueue(msg) || pledge.getPacketFilter().isLoginPacket(msg)) {
             QueueMode lastMode = this.queueHandler.getMode();
@@ -27,8 +32,12 @@ public class MessageQueuePrimer extends ChannelOutboundHandlerAdapter {
             return;
         }
 
-        this.queueHandler.setNextPacketType(msg.getClass());
-        super.write(ctx, msg, promise);
+        try {
+            this.queueHandler.setNextPacketType(msg.getClass());
+            super.write(ctx, msg, promise);
+        } finally {
+            this.queueHandler.setNextPacketType(null);
+        }
     }
 
 }

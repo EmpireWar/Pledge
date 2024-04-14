@@ -31,7 +31,7 @@ public class PacketBundleBuilder {
     }
 
     public boolean isDelimiter(Class<?> packetType) {
-        return packetType.equals(bundleClass);
+        return packetType != null && packetType.equals(bundleClass);
     }
 
     public boolean isSupported() {

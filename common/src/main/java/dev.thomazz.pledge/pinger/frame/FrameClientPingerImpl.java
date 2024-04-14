@@ -55,15 +55,9 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
         MessageQueuePrimer queuePrimer = new MessageQueuePrimer(api, queueHandler);
         this.api.getChannel(player).ifPresent(channel ->
                 ChannelUtils.runInEventLoop(channel, () -> {
-                    if (channel.pipeline().context("prepender") != null) {
-                        channel.pipeline()
-                                .addAfter("prepender", "pledge_queue_handler", queueHandler)
-                                .addLast("pledge_queue_primer", queuePrimer);
-                    } else {
-                        channel.pipeline()
-                                .addFirst("pledge_queue_handler", queueHandler)
-                                .addLast("pledge_queue_primer", queuePrimer);
-                    }
+                    channel.pipeline()
+                            .addAfter("prepender", "pledge_queue_handler", queueHandler)
+                            .addLast("pledge_queue_primer", queuePrimer);
                 })
         );
     }
@@ -80,7 +74,7 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
 
     @Override
     public void tickStart() {
-        this.frameDataMap.keySet().forEach(this::tryReadyHandler);
+        // NO-OP
     }
 
     @Override
@@ -140,20 +134,6 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
 
     public Optional<FrameData> getFrameData(UUID player) {
         return Optional.ofNullable(this.frameDataMap.get(player));
-    }
-
-    private void tryReadyHandler(UUID player) {
-        this.api.getChannel(player).filter(Channel::isOpen).ifPresent(channel ->
-            ChannelUtils.runInEventLoop(channel, () -> {
-                try {
-                    MessageQueueHandler handler = channel.pipeline().get(MessageQueueHandler.class);
-                    handler.setMode(QueueMode.ADD_LAST);
-                } catch (Exception ex) {
-                    this.api.logger().severe("Unable to ready handler for player: " + player);
-                    ex.printStackTrace();
-                }
-            })
-        );
     }
 
     private void trySendPings(UUID player, FrameData frameData, boolean flush) {

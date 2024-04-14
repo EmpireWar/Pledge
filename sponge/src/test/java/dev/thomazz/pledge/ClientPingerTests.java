@@ -9,6 +9,7 @@ import dev.thomazz.pledge.pinger.frame.FrameClientPingerListener;
 import dev.thomazz.pledge.pinger.frame.data.Frame;
 import dev.thomazz.pledge.pinger.frame.data.FrameData;
 import dev.thomazz.pledge.sponge.PledgeSponge;
+import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.embedded.EmbeddedChannel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -88,6 +89,8 @@ public class ClientPingerTests {
     @Test
     @Order(2)
     public void testFrameClientPinger() {
+        this.channel.pipeline().addFirst("prepender", new ChannelOutboundHandlerAdapter());
+
         FrameClientPingerImpl<User> pinger = new FrameClientPingerImpl<>(this.clientPing, 0, -999);
         pinger.registerPlayer(this.player);
 
@@ -168,6 +171,8 @@ public class ClientPingerTests {
     @Test
     @Order(4)
     public void testFrameClientPingerListener() {
+        this.channel.pipeline().addFirst("prepender", new ChannelOutboundHandlerAdapter());
+
         final UUID uuid = player.uniqueId();
         FrameClientPingerImpl<User> pinger = new FrameClientPingerImpl<>(this.clientPing, 0, -999);
         pinger.registerPlayer(this.player);

@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 public class MessageQueueHandler extends ChannelOutboundHandlerAdapter {
 
     private final Deque<NetworkMessage> messageQueue = new ConcurrentLinkedDeque<>();
-    private QueueMode mode = QueueMode.ADD_LAST;
+    private QueueMode mode = QueueMode.PASS;
     private Class<?> nextPacketType;
 
     @Override
