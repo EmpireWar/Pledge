@@ -117,14 +117,7 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
         Objects.requireNonNull(pingData);
         Objects.requireNonNull(frameData);
 
-        Frame frame;
-        if (!frameData.hasFrame()) {
-            frameData.setFrame(frame = this.createFrame(player, pingData));
-        } else {
-            frame = frameData.getFrame();
-        }
-
-        return frame;
+        return frameData.getCurrentFrame().updateAndGet(f -> f == null ? this.createFrame(player, pingData) : f);
     }
 
     @Override

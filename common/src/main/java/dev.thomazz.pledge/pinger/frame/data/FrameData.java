@@ -1,5 +1,7 @@
 package dev.thomazz.pledge.pinger.frame.data;
 
+import lombok.Getter;
+
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -7,16 +9,20 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class FrameData {
     private final Queue<Frame> expectingFrames = new ConcurrentLinkedQueue<>();
+    @Getter
     private final AtomicReference<Frame> currentFrame = new AtomicReference<>();
 
+    @Deprecated
     public boolean hasFrame() {
         return this.currentFrame.get() != null;
     }
 
+    @Deprecated
     public void setFrame(Frame frame) {
         this.currentFrame.set(frame);
     }
 
+    @Deprecated
     public Frame getFrame() {
         return this.currentFrame.get();
     }
