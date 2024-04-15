@@ -51,6 +51,6 @@ public class MessageQueueHandler extends ChannelOutboundHandlerAdapter {
             ctx.write(message.getMessage(), message.getPromise());
         }
 
-        if (flush) ctx.flush();
+        if (flush && ctx.channel().isOpen()) ctx.flush();
     }
 }
