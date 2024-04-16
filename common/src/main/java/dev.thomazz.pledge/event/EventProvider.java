@@ -4,5 +4,5 @@ import java.util.UUID;
 
 public interface EventProvider {
 
-    void callPongReceive(UUID player, int id);
+    boolean callPongReceive(UUID player, int id);
 }

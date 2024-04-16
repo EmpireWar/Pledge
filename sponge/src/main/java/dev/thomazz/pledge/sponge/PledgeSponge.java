@@ -77,6 +77,8 @@ public class PledgeSponge implements Pledge<User> {
     private final List<ClientPingerImpl<User>> clientPingers = new ArrayList<>();
     private final Map<UUID, Channel> playerChannels = new HashMap<>();
 
+    private boolean cancelPongs;
+
     PledgeSponge(PluginContainer plugin) {
         this.logger = Logger.getLogger(plugin.metadata().id());
         this.whitelist = new PacketFiltering(this);
@@ -151,8 +153,21 @@ public class PledgeSponge implements Pledge<User> {
             .forEach(
                 pinger -> pinger.getPingData(player)
                     .flatMap(data -> data.confirm(id))
-                    .ifPresentOrElse(pong -> pinger.onReceive(player, pong), () -> pinger.onError(player, id))
+                    .ifPresentOrElse(pong -> {
+                        pinger.onReceive(player, pong);
+                        event.setValidated(true);
+                    }, () -> pinger.onError(player, id))
             );
+    }
+
+    @Override
+    public boolean cancelPongs() {
+        return cancelPongs;
+    }
+
+    @Override
+    public void cancelPongs(boolean cancelPongs) {
+        this.cancelPongs = cancelPongs;
     }
 
     @Override

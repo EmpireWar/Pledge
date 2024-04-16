@@ -19,6 +19,7 @@ public class PongReceiveEvent extends AbstractEvent implements Cancellable {
 
     private final UUID player;
     private final int id;
+    private boolean isValidated;
     private boolean cancelled = false;
     private final Cause cause;
 

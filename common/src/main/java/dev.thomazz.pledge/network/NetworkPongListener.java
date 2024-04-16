@@ -20,7 +20,10 @@ public class NetworkPongListener extends ChannelInboundHandlerAdapter {
 
         if (packetProvider.isPong(msg)) {
             int id = packetProvider.idFromPong(msg);
-            clientPing.eventProvider().callPongReceive(player, id);
+            final boolean validated = clientPing.eventProvider().callPongReceive(player, id);
+            if (validated && clientPing.cancelPongs()) {
+                return;
+            }
         }
 
         super.channelRead(ctx, msg);

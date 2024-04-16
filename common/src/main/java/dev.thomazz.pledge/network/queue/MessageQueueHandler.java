@@ -17,6 +17,7 @@ public class MessageQueueHandler extends ChannelOutboundHandlerAdapter {
 
     private final Deque<NetworkMessage> messageQueue = new ConcurrentLinkedDeque<>();
     private QueueMode mode = QueueMode.PASS;
+    private Runnable endNextFrame;
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
@@ -31,6 +32,11 @@ public class MessageQueueHandler extends ChannelOutboundHandlerAdapter {
             case PASS:
                 super.write(ctx, msg, promise);
                 break;
+        }
+
+        if (this.endNextFrame != null) {
+            this.endNextFrame.run();
+            this.endNextFrame = null;
         }
     }
 

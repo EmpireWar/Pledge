@@ -19,6 +19,10 @@ import java.util.logging.Logger;
  */
 public interface Pledge<SP> {
 
+    boolean cancelPongs();
+
+    void cancelPongs(boolean cancelPongs);
+
     default boolean supportsBundles() {
         return PacketBundleBuilder.INSTANCE.isSupported();
     }

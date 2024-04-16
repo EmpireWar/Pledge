@@ -8,7 +8,9 @@ import java.util.UUID;
 public class EventProviderImpl implements EventProvider {
 
     @Override
-    public void callPongReceive(UUID player, int id) {
-        Bukkit.getPluginManager().callEvent(new PongReceiveEvent(player, id));
+    public boolean callPongReceive(UUID player, int id) {
+        final PongReceiveEvent event = new PongReceiveEvent(player, id);
+        Bukkit.getPluginManager().callEvent(event);
+        return event.isValidated();
     }
 }

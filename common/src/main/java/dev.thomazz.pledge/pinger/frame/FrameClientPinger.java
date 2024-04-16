@@ -27,6 +27,12 @@ public interface FrameClientPinger<SP> extends ClientPinger<SP> {
     void finishFrame(UUID player);
 
     /**
+     * Schedules a frame to finish when the next packet is sent.
+     * @param player - Player to end frame for
+     */
+    void scheduleFinishFrame(UUID player);
+
+    /**
      * Attaches a listener to listen to any events for {@link Frame} objects.
      * <p>
      * @param listener - Listener to attach

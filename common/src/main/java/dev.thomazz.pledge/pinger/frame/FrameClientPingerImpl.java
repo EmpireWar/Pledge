@@ -129,6 +129,16 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
         getFrameData(player).ifPresent(data -> this.trySendPings(player, data, false));
     }
 
+    @Override
+    public void scheduleFinishFrame(UUID player) {
+        this.api.getChannel(player).ifPresent(channel ->
+                ChannelUtils.runInEventLoop(channel, () -> {
+                    final MessageQueueHandler handler = channel.pipeline().get(MessageQueueHandler.class);
+                    handler.setEndNextFrame(() -> this.finishFrame(player));
+                })
+        );
+    }
+
     public Optional<FrameData> getFrameData(UUID player) {
         return Optional.ofNullable(this.frameDataMap.get(player));
     }

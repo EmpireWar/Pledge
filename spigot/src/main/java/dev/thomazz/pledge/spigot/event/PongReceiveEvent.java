@@ -21,6 +21,7 @@ public class PongReceiveEvent extends Event implements Cancellable {
 
     private final UUID player;
     private final int id;
+    private boolean isValidated;
     private boolean cancelled = false;
 
     public PongReceiveEvent(UUID player, int id) {

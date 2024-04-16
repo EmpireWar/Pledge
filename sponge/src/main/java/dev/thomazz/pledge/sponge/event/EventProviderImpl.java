@@ -8,7 +8,9 @@ import java.util.UUID;
 public class EventProviderImpl implements EventProvider {
 
     @Override
-    public void callPongReceive(UUID player, int id) {
-        Sponge.eventManager().post(new PongReceiveEvent(player, id));
+    public boolean callPongReceive(UUID player, int id) {
+        final PongReceiveEvent event = new PongReceiveEvent(player, id);
+        Sponge.eventManager().post(event);
+        return event.isValidated();
     }
 }
