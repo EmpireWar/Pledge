@@ -6,12 +6,15 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 @RequiredArgsConstructor
 public class MessageQueuePrimer extends ChannelOutboundHandlerAdapter {
 
     private final Pledge<?> pledge;
     private final MessageQueueHandler queueHandler;
+    @Setter
+    private Runnable endNextFrame;
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
@@ -41,6 +44,11 @@ public class MessageQueuePrimer extends ChannelOutboundHandlerAdapter {
                     break;
                 case PASS:
                     break;
+            }
+
+            if (this.endNextFrame != null) {
+                this.endNextFrame.run();
+                this.endNextFrame = null;
             }
         }
     }

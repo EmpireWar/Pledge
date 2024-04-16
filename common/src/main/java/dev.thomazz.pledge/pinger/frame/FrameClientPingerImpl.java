@@ -83,7 +83,13 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
 
     @Override
     public void tickEnd() {
-        this.frameDataMap.forEach((id, data) -> this.trySendPings(id, data, true));
+        for (UUID player : this.frameDataMap.keySet()) {
+            this.api.getChannel(player).ifPresent(channel ->
+                    ChannelUtils.runInEventLoop(channel, () -> {
+                        this.trySendPings(player, this.frameDataMap.get(player), true);
+                    })
+            );
+        }
     }
 
     @Override
@@ -114,7 +120,7 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
     }
 
     @Override
-    public synchronized Frame getOrCreate(UUID player) {
+    public Frame getOrCreate(UUID player) {
         PingData pingData = this.pingDataMap.get(player);
         FrameData frameData = this.frameDataMap.get(player);
 
@@ -133,7 +139,7 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
     public void scheduleFinishFrame(UUID player) {
         this.api.getChannel(player).ifPresent(channel ->
                 ChannelUtils.runInEventLoop(channel, () -> {
-                    final MessageQueueHandler handler = channel.pipeline().get(MessageQueueHandler.class);
+                    final MessageQueuePrimer handler = channel.pipeline().get(MessageQueuePrimer.class);
                     handler.setEndNextFrame(() -> this.finishFrame(player));
                 })
         );
@@ -146,45 +152,47 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
     private void trySendPings(UUID player, FrameData frameData, boolean flush) {
         Optional<Frame> optionalFrame = frameData.continueFrame();
 
-        this.api.getChannel(player).filter(Channel::isOpen).ifPresent(channel ->
-            ChannelUtils.runInEventLoop(channel, () -> {
-                try {
-                    final MessageQueueHandler handler = channel.pipeline().get(MessageQueueHandler.class);
-                    final ChannelHandlerContext context = channel.pipeline().context(handler);
-                    if (handler != null) {
-                        if (optionalFrame.isPresent()) {
-                            Frame frame = optionalFrame.get();
-                            this.frameListener.forEach(listener -> listener.onFrameSend(player, frame));
+        this.api.getChannel(player).filter(Channel::isOpen).ifPresent(channel -> {
+            if (!channel.eventLoop().inEventLoop()) {
+                throw new IllegalStateException("Not in event loop!");
+            }
 
-                            frame.setBundle(frame.isBundle() && api.supportsBundles());
+            try {
+                final MessageQueueHandler handler = channel.pipeline().get(MessageQueueHandler.class);
+                final ChannelHandlerContext context = channel.pipeline().context(handler);
+                if (handler != null) {
+                    if (optionalFrame.isPresent()) {
+                        Frame frame = optionalFrame.get();
+                        this.frameListener.forEach(listener -> listener.onFrameSend(player, frame));
 
-                            if (frame.isBundle()) {
-                                // Remove bundles that would interfere with our wrapping bundles.
-                                handler.stripBundles();
-                            }
+                        frame.setBundle(frame.isBundle() && api.supportsBundles());
 
-                            // Wrap by ping packets
-                            handler.setMode(QueueMode.ADD_FIRST);
-                            this.ping(player, channel, new Ping(PingOrder.TICK_START, frame.getStartId()));
-                            handler.setMode(QueueMode.ADD_LAST);
-                            this.ping(player, channel, new Ping(PingOrder.TICK_END, frame.getEndId()));
-
-                            if (frame.isBundle()) {
-                                handler.setMode(QueueMode.ADD_FIRST);
-                                channel.write(PacketBundleBuilder.INSTANCE.buildDelimiter());
-                                handler.setMode(QueueMode.ADD_LAST);
-                                channel.write(PacketBundleBuilder.INSTANCE.buildDelimiter());
-                            }
+                        if (frame.isBundle()) {
+                            // Remove bundles that would interfere with our wrapping bundles.
+                            handler.stripBundles();
                         }
 
-                        if (channel.isOpen()) handler.drain(context, flush);
+                        // Wrap by ping packets
+                        handler.setMode(QueueMode.ADD_FIRST);
+                        this.ping(player, channel, new Ping(PingOrder.TICK_START, frame.getStartId()));
+                        handler.setMode(QueueMode.ADD_LAST);
+                        this.ping(player, channel, new Ping(PingOrder.TICK_END, frame.getEndId()));
+
+                        if (frame.isBundle()) {
+                            handler.setMode(QueueMode.ADD_FIRST);
+                            channel.write(PacketBundleBuilder.INSTANCE.buildDelimiter());
+                            handler.setMode(QueueMode.ADD_LAST);
+                            channel.write(PacketBundleBuilder.INSTANCE.buildDelimiter());
+                        }
                     }
-                } catch (Exception ex) {
-                    this.api.logger().severe("Unable to drain message queue from player: " + player);
-                    ex.printStackTrace();
+
+                    if (channel.isOpen()) handler.drain(context, flush);
                 }
-            })
-        );
+            } catch (Exception ex) {
+                this.api.logger().severe("Unable to drain message queue from player: " + player);
+                ex.printStackTrace();
+            }
+        });
     }
 
     private Frame createFrame(UUID player, PingData data) {
