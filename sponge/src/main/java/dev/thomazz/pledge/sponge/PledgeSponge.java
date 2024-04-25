@@ -4,6 +4,7 @@ import dev.thomazz.pledge.Pledge;
 import dev.thomazz.pledge.event.EventProvider;
 import dev.thomazz.pledge.network.NetworkPongListener;
 import dev.thomazz.pledge.network.queue.PacketFiltering;
+import dev.thomazz.pledge.packet.BundleProvider;
 import dev.thomazz.pledge.packet.PacketProviderFactory;
 import dev.thomazz.pledge.packet.PingPacketProvider;
 import dev.thomazz.pledge.pinger.ClientPinger;
@@ -70,6 +71,7 @@ public class PledgeSponge implements Pledge<User> {
     private final PacketFiltering whitelist;
     private final ChannelAccessProvider channelAccessProvider;
     private final PingPacketProvider packetProvider;
+    private BundleProvider bundleProvider;
 
     private final ScheduledTask startTask;
     private final TickEndTask endTask;
@@ -234,6 +236,16 @@ public class PledgeSponge implements Pledge<User> {
         this.endTask.cancel();
 
         PledgeSponge.instance = null;
+    }
+
+    @Override
+    public BundleProvider bundleProvider() {
+        return bundleProvider;
+    }
+
+    @Override
+    public void bundleProvider(BundleProvider bundleProvider) {
+        this.bundleProvider = bundleProvider;
     }
 
     private final EventProviderImpl eventProvider = new EventProviderImpl();

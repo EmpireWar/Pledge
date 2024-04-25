@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -58,7 +59,7 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
                     channel.pipeline().addAfter("prepender", "pledge_queue_handler", queueHandler);
                     if (api.supportsBundles()) {
                         // Need to listen to bundle delimiters
-                        channel.pipeline().addBefore("unbundler", "pledge_queue_primer", queuePrimer);
+                        channel.pipeline().addAfter("encoder", "pledge_queue_primer", queuePrimer);
                     } else {
                         channel.pipeline().addLast("pledge_queue_primer", queuePrimer);
                     }
@@ -180,9 +181,9 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
 
                         if (frame.isBundle()) {
                             handler.setMode(QueueMode.ADD_FIRST);
-                            channel.write(PacketBundleBuilder.INSTANCE.buildDelimiter());
+                            api.bundleProvider().writeBundle(player);
                             handler.setMode(QueueMode.ADD_LAST);
-                            channel.write(PacketBundleBuilder.INSTANCE.buildDelimiter());
+                            api.bundleProvider().writeBundle(player);
                         }
                     }
 

@@ -2,6 +2,7 @@ package dev.thomazz.pledge;
 
 import dev.thomazz.pledge.event.EventProvider;
 import dev.thomazz.pledge.network.queue.PacketFiltering;
+import dev.thomazz.pledge.packet.BundleProvider;
 import dev.thomazz.pledge.packet.PacketBundleBuilder;
 import dev.thomazz.pledge.packet.PingPacketProvider;
 import dev.thomazz.pledge.pinger.ClientPinger;
@@ -79,6 +80,10 @@ public interface Pledge<SP> {
      * A new API instance can be retrieved and created using Pledge's server implementation with #getOrCreate(Plugin).
      */
     void destroy();
+
+    BundleProvider bundleProvider();
+
+    void bundleProvider(BundleProvider bundleProvider);
 
     EventProvider eventProvider();
 

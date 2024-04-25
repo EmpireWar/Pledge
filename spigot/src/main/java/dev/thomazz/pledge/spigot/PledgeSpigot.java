@@ -4,6 +4,7 @@ import dev.thomazz.pledge.Pledge;
 import dev.thomazz.pledge.event.EventProvider;
 import dev.thomazz.pledge.network.NetworkPongListener;
 import dev.thomazz.pledge.network.queue.PacketFiltering;
+import dev.thomazz.pledge.packet.BundleProvider;
 import dev.thomazz.pledge.packet.PacketProviderFactory;
 import dev.thomazz.pledge.packet.PingPacketProvider;
 import dev.thomazz.pledge.pinger.ClientPinger;
@@ -69,6 +70,7 @@ public class PledgeSpigot implements Pledge<Player>, Listener {
     private final PacketFiltering whitelist;
     private final ChannelAccessProvider channelAccessProvider;
     private final PingPacketProvider packetProvider;
+    private BundleProvider bundleProvider;
 
     private final BukkitTask startTask;
     private final TickEndTask endTask;
@@ -236,6 +238,16 @@ public class PledgeSpigot implements Pledge<Player>, Listener {
         this.endTask.cancel();
 
         PledgeSpigot.instance = null;
+    }
+
+    @Override
+    public BundleProvider bundleProvider() {
+        return bundleProvider;
+    }
+
+    @Override
+    public void bundleProvider(BundleProvider bundleProvider) {
+        this.bundleProvider = bundleProvider;
     }
 
     private final EventProviderImpl eventProvider = new EventProviderImpl();
