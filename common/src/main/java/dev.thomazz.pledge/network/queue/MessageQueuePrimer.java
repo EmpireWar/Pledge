@@ -31,19 +31,24 @@ public class MessageQueuePrimer extends ChannelOutboundHandlerAdapter {
             return;
         }
 
+        // Support packets being added whilst writing a packet
         try {
             super.write(ctx, msg, promise);
         } finally {
-            // Support packets being added whilst writing a packet
-            switch (this.queueHandler.getMode()) {
-                case ADD_LAST:
-                    this.queueHandler.getMessageQueue().peekLast().setPacketType(msg.getClass());
-                    break;
-                case ADD_FIRST:
-                    this.queueHandler.getMessageQueue().peekFirst().setPacketType(msg.getClass());
-                    break;
-                case PASS:
-                    break;
+            // This happens with ViaVersion
+            // This is useless for older clients where this happens anyway
+            // We could try to implement a client version check but I'm not sure how.
+            if (!this.queueHandler.getMessageQueue().isEmpty()) {
+                switch (this.queueHandler.getMode()) {
+                    case ADD_LAST:
+                        this.queueHandler.getMessageQueue().peekLast().setPacketType(msg.getClass());
+                        break;
+                    case ADD_FIRST:
+                        this.queueHandler.getMessageQueue().peekFirst().setPacketType(msg.getClass());
+                        break;
+                    case PASS:
+                        break;
+                }
             }
 
             if (this.endNextFrame != null) {
