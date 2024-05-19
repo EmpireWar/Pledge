@@ -32,6 +32,7 @@ import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.Order;
 import org.spongepowered.api.event.network.ServerSideConnectionEvent;
 import org.spongepowered.api.network.ServerSideConnection;
+import org.spongepowered.api.profile.GameProfile;
 import org.spongepowered.api.scheduler.ScheduledTask;
 import org.spongepowered.api.scheduler.Scheduler;
 import org.spongepowered.api.scheduler.Task;
@@ -118,11 +119,11 @@ public class PledgeSponge implements Pledge<User> {
         this.clientPingers.forEach(pinger -> pinger.registerPlayer(player));
     }
 
-    private void teardownPlayer(ServerPlayer player) {
-        this.playerChannels.remove(player.uniqueId());
+    private void teardownPlayer(GameProfile profile) {
+        this.playerChannels.remove(profile.uniqueId());
 
         // Unregister from client pingers
-        this.clientPingers.forEach(pinger -> pinger.unregisterPlayer(player.uniqueId()));
+        this.clientPingers.forEach(pinger -> pinger.unregisterPlayer(profile.uniqueId()));
     }
 
     @Listener(order = Order.LATE)
@@ -132,7 +133,7 @@ public class PledgeSponge implements Pledge<User> {
 
     @Listener(order = Order.LATE)
     void onPlayerQuit(ServerSideConnectionEvent.Disconnect event) {
-        this.teardownPlayer(event.player());
+        event.profile().ifPresent(this::teardownPlayer);
     }
 
     @Listener(order = Order.LATE)
@@ -229,7 +230,7 @@ public class PledgeSponge implements Pledge<User> {
         }
 
         // Teardown for all players
-        Sponge.server().onlinePlayers().forEach(this::teardownPlayer);
+        Sponge.server().onlinePlayers().forEach(player -> this.teardownPlayer(player.profile()));
 
         Sponge.eventManager().unregisterListeners(this);
         this.startTask.cancel();

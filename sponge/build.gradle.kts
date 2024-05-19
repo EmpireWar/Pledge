@@ -25,7 +25,7 @@ tasks {
     }
 }
 
-java.targetCompatibility = JavaVersion.VERSION_17
+java.targetCompatibility = JavaVersion.VERSION_21
 
 group = "dev.thomazz.pledge"
 description = "sponge"
