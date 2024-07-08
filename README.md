@@ -66,7 +66,7 @@ public class ExamplePlugin extends JavaPlugin implements ClientPingerListener {
     @Override
     public void onEnable() {
         this.pledge = Pledge.getOrCreate(this); // Create or get when already registered to another plugin
-        ClientPinger pinger = this.pledge.createPinger(-1, -200); // Ping ids range from -1 to -200
+        ClientPinger pinger = this.pledge.createPinger(ClientPingerOptions.range(-1, -200)); // Ping ids range from -1 to -200
         pinger.attach(this); // Attach listener to pinger
     }
 
@@ -101,7 +101,7 @@ public class ExamplePlugin extends JavaPlugin implements FrameClientPingerListen
     @Override
     public void onEnable() {
         this.pledge = Pledge.getOrCreate(this); // Create or get when already registered to another plugin
-        FrameClientPinger pinger = this.pledge.createFramePinger(-1, -200); // Ping ids range from -1 to -200
+        FrameClientPinger pinger = this.pledge.createFramePinger(ClientPingerOptions.range(-1, -200)); // Ping ids range from -1 to -200
         pinger.attach(this); // Attach listener to pinger
         Bukkit.getScheduler().runTaskTimer(this, () -> Bukkit.getOnlinePlayers().forEach(pinger::getOrCreate), 20L, 20L); // Create a frame every second
     }
@@ -141,7 +141,7 @@ repositories {
 }
 
 dependencies {
-    implementation("org.empirewar.pledge:PLATFORM:3.1")
+    implementation("org.empirewar.pledge:PLATFORM:3.5")
 }
 ```
 

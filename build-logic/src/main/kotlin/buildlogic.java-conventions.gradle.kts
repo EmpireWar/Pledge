@@ -38,9 +38,9 @@ dependencies {
 }
 
 group = "dev.thomazz"
-version = "3.3"
+version = "3.5"
 java.sourceCompatibility = JavaVersion.VERSION_1_8
-java.targetCompatibility = JavaVersion.VERSION_17
+java.targetCompatibility = JavaVersion.VERSION_21
 
 java {
     withSourcesJar()

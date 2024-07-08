@@ -9,6 +9,7 @@ import dev.thomazz.pledge.packet.PacketProviderFactory;
 import dev.thomazz.pledge.packet.PingPacketProvider;
 import dev.thomazz.pledge.pinger.ClientPinger;
 import dev.thomazz.pledge.pinger.ClientPingerImpl;
+import dev.thomazz.pledge.pinger.ClientPingerOptions;
 import dev.thomazz.pledge.pinger.frame.FrameClientPinger;
 import dev.thomazz.pledge.pinger.frame.FrameClientPingerImpl;
 import dev.thomazz.pledge.sponge.event.EventProviderImpl;
@@ -120,7 +121,10 @@ public class PledgeSponge implements Pledge<User> {
     }
 
     private void teardownPlayer(GameProfile profile) {
-        this.playerChannels.remove(profile.uniqueId());
+        Channel channel = this.playerChannels.remove(profile.uniqueId());
+
+        // Eject pong listener
+        channel.pipeline().remove(NetworkPongListener.class);
 
         // Unregister from client pingers
         this.clientPingers.forEach(pinger -> pinger.unregisterPlayer(profile.uniqueId()));
@@ -205,15 +209,15 @@ public class PledgeSponge implements Pledge<User> {
     }
 
     @Override
-    public ClientPinger<User> createPinger(int startId, int endId) {
-        ClientPingerImpl<User> pinger = new ClientPingerImpl<>(this, startId, endId);
+    public ClientPinger<User> createPinger(ClientPingerOptions options) {
+        ClientPingerImpl<User> pinger = new ClientPingerImpl<>(this, options);
         this.clientPingers.add(pinger);
         return pinger;
     }
 
     @Override
-    public FrameClientPinger<User> createFramePinger(int startId, int endId) {
-        FrameClientPingerImpl<User> pinger = new FrameClientPingerImpl<>(this, startId, endId);
+    public FrameClientPinger<User> createFramePinger(ClientPingerOptions options) {
+        FrameClientPingerImpl<User> pinger = new FrameClientPingerImpl<>(this, options);
         this.clientPingers.add(pinger);
         return pinger;
     }

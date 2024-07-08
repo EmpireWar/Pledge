@@ -6,6 +6,7 @@ import dev.thomazz.pledge.packet.BundleProvider;
 import dev.thomazz.pledge.packet.PacketBundleBuilder;
 import dev.thomazz.pledge.packet.PingPacketProvider;
 import dev.thomazz.pledge.pinger.ClientPinger;
+import dev.thomazz.pledge.pinger.ClientPingerOptions;
 import dev.thomazz.pledge.pinger.frame.FrameClientPinger;
 import dev.thomazz.pledge.util.MinecraftReflectionProvider;
 import io.netty.channel.Channel;
@@ -55,21 +56,19 @@ public interface Pledge<SP> {
      * Creates a client pinger.
      * See documentation in {@link ClientPinger} for more info.
      * <p>
-     * @param startId - Start ID for ping range
-     * @param endId   - End ID for ping range
+     * @param options - Options
      * @return        - Client pinger instance
      */
-    ClientPinger<SP> createPinger(int startId, int endId);
+    ClientPinger<SP> createPinger(ClientPingerOptions options);
 
     /**
      * Creates a frame client pinger.
      * See documentation in {@link FrameClientPinger} for more info.
      * <p>
-     * @param startId - Start ID for ping range
-     * @param endId   - End ID for ping range
+     * @param options - Options
      * @return        - Frame client pinger instance
      */
-    FrameClientPinger<SP> createFramePinger(int startId, int endId);
+    FrameClientPinger<SP> createFramePinger(ClientPingerOptions options);
 
     PingPacketProvider getPacketProvider();
 

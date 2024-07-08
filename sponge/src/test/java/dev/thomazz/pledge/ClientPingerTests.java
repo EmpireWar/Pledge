@@ -3,7 +3,9 @@ package dev.thomazz.pledge;
 import dev.thomazz.pledge.packet.PingPacketProvider;
 import dev.thomazz.pledge.pinger.ClientPingerImpl;
 import dev.thomazz.pledge.pinger.ClientPingerListener;
+import dev.thomazz.pledge.pinger.ClientPingerOptions;
 import dev.thomazz.pledge.pinger.data.PingData;
+import dev.thomazz.pledge.pinger.frame.FrameClientPinger;
 import dev.thomazz.pledge.pinger.frame.FrameClientPingerImpl;
 import dev.thomazz.pledge.pinger.frame.FrameClientPingerListener;
 import dev.thomazz.pledge.pinger.frame.data.Frame;
@@ -57,7 +59,7 @@ public class ClientPingerTests {
     @Test
     @Order(1)
     public void testSimpleClientPinger() {
-        ClientPingerImpl<User> pinger = new ClientPingerImpl<>(this.clientPing, 0, -999);
+        ClientPingerImpl<User> pinger = new ClientPingerImpl<>(this.clientPing, ClientPingerOptions.range(0, -999));
         pinger.registerPlayer(this.player);
         PingData pingData = pinger.getPingData(this.player.uniqueId()).orElseThrow(IllegalStateException::new);
 
@@ -91,7 +93,7 @@ public class ClientPingerTests {
     public void testFrameClientPinger() {
         this.channel.pipeline().addFirst("prepender", new ChannelOutboundHandlerAdapter());
 
-        FrameClientPingerImpl<User> pinger = new FrameClientPingerImpl<>(this.clientPing, 0, -999);
+        FrameClientPingerImpl<User> pinger = new FrameClientPingerImpl<>(this.clientPing, ClientPingerOptions.range(0, -999));
         pinger.registerPlayer(this.player);
 
         PingData pingData = pinger.getPingData(this.player.uniqueId()).orElseThrow(IllegalStateException::new);
@@ -142,7 +144,7 @@ public class ClientPingerTests {
     @Order(3)
     public void testClientPingerListener() {
         final UUID uuid = player.uniqueId();
-        ClientPingerImpl<User> pinger = new ClientPingerImpl<>(this.clientPing, 0, -999);
+        ClientPingerImpl<User> pinger = new ClientPingerImpl<>(this.clientPing, ClientPingerOptions.range(0, -999));
         pinger.registerPlayer(this.player);
 
         PingData pingData = pinger.getPingData(uuid).orElseThrow(IllegalStateException::new);
@@ -174,7 +176,7 @@ public class ClientPingerTests {
         this.channel.pipeline().addFirst("prepender", new ChannelOutboundHandlerAdapter());
 
         final UUID uuid = player.uniqueId();
-        FrameClientPingerImpl<User> pinger = new FrameClientPingerImpl<>(this.clientPing, 0, -999);
+        FrameClientPingerImpl<User> pinger = new FrameClientPingerImpl<>(this.clientPing, ClientPingerOptions.range(0, -999));
         pinger.registerPlayer(this.player);
 
         PingData pingData = pinger.getPingData(uuid).orElseThrow(IllegalStateException::new);

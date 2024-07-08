@@ -5,6 +5,7 @@ import dev.thomazz.pledge.network.queue.MessageQueueHandler;
 import dev.thomazz.pledge.network.queue.MessageQueuePrimer;
 import dev.thomazz.pledge.network.queue.QueueMode;
 import dev.thomazz.pledge.pinger.ClientPingerImpl;
+import dev.thomazz.pledge.pinger.ClientPingerOptions;
 import dev.thomazz.pledge.pinger.data.Ping;
 import dev.thomazz.pledge.pinger.data.PingData;
 import dev.thomazz.pledge.pinger.data.PingOrder;
@@ -26,8 +27,8 @@ public class FrameClientPingerImpl<SP> extends ClientPingerImpl<SP> implements F
     private final Map<UUID, FrameData> frameDataMap = new LinkedHashMap<>();
     private final List<FrameClientPingerListener> frameListener = new ArrayList<>();
 
-    public FrameClientPingerImpl(Pledge<SP> clientPing, int startId, int endId) {
-        super(clientPing, startId, endId);
+    public FrameClientPingerImpl(Pledge<SP> clientPing, ClientPingerOptions options) {
+        super(clientPing, options);
     }
 
     @Override
