@@ -125,7 +125,9 @@ public class PledgeSpigot implements Pledge<Player>, Listener {
         Channel channel = this.playerChannels.remove(player.getUniqueId());
 
         // Eject pong listener
-        channel.pipeline().remove(NetworkPongListener.class);
+        if (channel.pipeline().get(NetworkPongListener.class) != null) {
+            channel.pipeline().remove(NetworkPongListener.class);
+        }
 
         // Unregister from client pingers
         this.clientPingers.forEach(pinger -> pinger.unregisterPlayer(player.getUniqueId()));

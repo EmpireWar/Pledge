@@ -124,7 +124,9 @@ public class PledgeSponge implements Pledge<User> {
         Channel channel = this.playerChannels.remove(profile.uniqueId());
 
         // Eject pong listener
-        channel.pipeline().remove(NetworkPongListener.class);
+        if (channel.pipeline().get(NetworkPongListener.class) != null) {
+            channel.pipeline().remove(NetworkPongListener.class);
+        }
 
         // Unregister from client pingers
         this.clientPingers.forEach(pinger -> pinger.unregisterPlayer(profile.uniqueId()));
