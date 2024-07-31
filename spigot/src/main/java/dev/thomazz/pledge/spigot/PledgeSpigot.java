@@ -121,11 +121,11 @@ public class PledgeSpigot implements Pledge<Player>, Listener {
         this.clientPingers.forEach(pinger -> pinger.registerPlayer(player));
     }
 
-    private void teardownPlayer(Player player) {
+    private void teardownPlayer(Player player, boolean cleanPipeline) {
         Channel channel = this.playerChannels.remove(player.getUniqueId());
 
         // Eject pong listener
-        if (channel.pipeline().get(NetworkPongListener.class) != null) {
+        if (cleanPipeline && channel.pipeline().get(NetworkPongListener.class) != null) {
             channel.pipeline().remove(NetworkPongListener.class);
         }
 
@@ -140,7 +140,7 @@ public class PledgeSpigot implements Pledge<Player>, Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     void onPlayerQuit(PlayerQuitEvent event) {
-        this.teardownPlayer(event.getPlayer());
+        this.teardownPlayer(event.getPlayer(), false);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -237,7 +237,7 @@ public class PledgeSpigot implements Pledge<Player>, Listener {
         }
 
         // Teardown for all players
-        Bukkit.getOnlinePlayers().forEach(this::teardownPlayer);
+        Bukkit.getOnlinePlayers().forEach(player -> this.teardownPlayer(player, true));
 
         HandlerList.unregisterAll(this);
         this.startTask.cancel();

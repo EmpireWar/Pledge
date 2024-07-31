@@ -120,11 +120,11 @@ public class PledgeSponge implements Pledge<User> {
         this.clientPingers.forEach(pinger -> pinger.registerPlayer(player));
     }
 
-    private void teardownPlayer(GameProfile profile) {
+    private void teardownPlayer(GameProfile profile, boolean cleanPipeline) {
         Channel channel = this.playerChannels.remove(profile.uniqueId());
 
         // Eject pong listener
-        if (channel.pipeline().get(NetworkPongListener.class) != null) {
+        if (cleanPipeline && channel.pipeline().get(NetworkPongListener.class) != null) {
             channel.pipeline().remove(NetworkPongListener.class);
         }
 
@@ -139,7 +139,7 @@ public class PledgeSponge implements Pledge<User> {
 
     @Listener(order = Order.LATE)
     void onPlayerQuit(ServerSideConnectionEvent.Disconnect event) {
-        event.profile().ifPresent(this::teardownPlayer);
+        event.profile().ifPresent(profile -> this.teardownPlayer(profile, false));
     }
 
     @Listener(order = Order.LATE)
@@ -236,7 +236,7 @@ public class PledgeSponge implements Pledge<User> {
         }
 
         // Teardown for all players
-        Sponge.server().onlinePlayers().forEach(player -> this.teardownPlayer(player.profile()));
+        Sponge.server().onlinePlayers().forEach(player -> this.teardownPlayer(player.profile(), true));
 
         Sponge.eventManager().unregisterListeners(this);
         this.startTask.cancel();

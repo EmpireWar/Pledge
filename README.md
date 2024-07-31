@@ -137,7 +137,7 @@ If you want to use this in your project, you can add it as a Maven dependency:
 
 ```kts
 repositories {
-    maven("https://repo.convallyria.com/snapshots/")
+    maven("https://repo.empirewar.org/snapshots/")
 }
 
 dependencies {
