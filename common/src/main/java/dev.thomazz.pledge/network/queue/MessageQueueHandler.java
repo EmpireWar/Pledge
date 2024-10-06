@@ -42,7 +42,14 @@ public class MessageQueueHandler extends ChannelOutboundHandlerAdapter {
 
     public void stripBundles() {
         // Packet type can be null if a plugin in the pipeline added their own packets - no good way to handle this.
-        messageQueue.removeIf(msg -> msg.getPacketType() != null && PacketBundleBuilder.INSTANCE.isDelimiter(msg.getPacketType()));
+        messageQueue.removeIf(msg -> {
+            final boolean isBundle = msg.getPacketType() != null && PacketBundleBuilder.INSTANCE.isDelimiter(msg.getPacketType());
+            if (isBundle) {
+                // We must mark this as successful to prevent memory leaks
+                msg.getPromise().setSuccess();
+            }
+            return isBundle;
+        });
     }
 
     public void drain(ChannelHandlerContext ctx, boolean flush) {
